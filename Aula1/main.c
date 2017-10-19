@@ -19,11 +19,12 @@ int main(int argc, char** argv) {
 		exit(0);
 	}
 
+/*
 	if((strcmp(argv[2], "TRANSMITTER") == 0) && strcmp(argv[2], "RECEIVER") == 0){
 		printf("ERROR: Invalid argument provided: %s", argv[2]);
 		exit(-1);
 	}
-/*
+
 if(strcmp(argv[2], "TRANSMITTER") == 0){
 	llopen((*argv[1])-'0', TRANSMITTER);
 }
@@ -31,7 +32,19 @@ else{
 	llopen((*argv[1])-'0', RECEIVER);
 }
 */
-llopen((*argv[1])-'0', argv[2]);
+
+if(strcmp(argv[2], "TRANSMITTER") == 0){
+	llopen((*argv[1])-'0', 0);
+}
+else if(strcmp(argv[2], "RECEIVER") == 0) {
+	llopen((*argv[1])-'0', 1);
+}
+else{
+	printf("ERROR: Invalid argument provided: %s\n", argv[2]);
+	exit(-1);
+}
+
+//llopen((*argv[1])-'0', argv[2]);
 
 	return 0;
 }

@@ -26,7 +26,7 @@ volatile int STOP=FALSE;
 
 unsigned int retry_counter, state;
 
-int llopen(int port, char* mode){
+int llopen(int port, char mode){
 
   if(port != 0 && port != 1){
     printf("ERROR:llopen: invalid serial port number: %d\n", port);
@@ -40,11 +40,12 @@ int llopen(int port, char* mode){
   }
   */
 
+/*
   if((strcmp(mode, "TRANSMITTER") != 0) && (strcmp(mode, "RECEIVER") != 0)){
     printf("ERROR:llopen: invalid mode: %s\n", mode);
     exit(-1);
   }
-
+*/
 
   char portstring[] = "/dev/ttyS";
   char *portnum;
@@ -102,11 +103,15 @@ int llopen(int port, char* mode){
       exit(-1);
     }
 
-    if(strcmp(mode, "TRANSMITTER") == 0) {
+    //if(strcmp(mode, "TRANSMITTER") == 0) {
+
+    if(mode == TRANSMITTER){
       /* transmitter stuff: send SET and stuff */
 
       retry_counter = 0;
       state = SET_SEND;
+
+      printf("oi mig\n");
 
       set_message[0] = FLAG;
       set_message[1] = A;
@@ -120,14 +125,14 @@ int llopen(int port, char* mode){
       /* receiver stuff: state machine and stuff */
     }
 
-
-
-
-
     printf("New termios structure set\n");
 
     //Send
-    printf("Message to send: %d\n", *set_message & 0xff);
+    int i;
+    printf("\nMessage to send:\n");
+    for(i=0; i < 5; i++){
+      printf("SET[%d] = %x\n", i, set_message[i]);
+    }
 
     res = write(fd, buf, strlen(buf) + 1);
     printf("\n%d bytes written\n", res);

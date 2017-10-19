@@ -3,10 +3,13 @@
 
 typedef enum {TRANSMITTER, RECEIVER} UserMode;
 
-int llopen(int port, char* mode);
+int llopen(int port, char mode);
 int llwrite(int fd, char *buffer, int len);
 int llread(int fd, char *buffer);
 int llclose(int fd);
+
+#define TRANSMITTER 0
+#define RECEIVER 1
 
 /* State Machine */
 #define SET_SEND 0
