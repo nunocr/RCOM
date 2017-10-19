@@ -23,13 +23,15 @@ int main(int argc, char** argv) {
 		printf("ERROR: Invalid argument provided: %s", argv[2]);
 		exit(-1);
 	}
-
+/*
 if(strcmp(argv[2], "TRANSMITTER") == 0){
 	llopen((*argv[1])-'0', TRANSMITTER);
 }
 else{
 	llopen((*argv[1])-'0', RECEIVER);
 }
+*/
+llopen((*argv[1])-'0', argv[2]);
 
 	return 0;
 }

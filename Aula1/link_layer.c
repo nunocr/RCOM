@@ -26,17 +26,25 @@ volatile int STOP=FALSE;
 
 unsigned int retry_counter, state;
 
-int llopen(int port, UserMode mode){
+int llopen(int port, char* mode){
 
   if(port != 0 && port != 1){
-    printf("Usage: invalid serial port number: %d\n", port);
-    exit(1);
+    printf("ERROR:llopen: invalid serial port number: %d\n", port);
+    exit(-1);
   }
 
+/*
   if(mode != TRANSMITTER && mode != RECEIVER){
     printf("Usage: invalid mode: %d\n", mode);
-    exit(2);
+    exit(-1);
   }
+  */
+
+  if((strcmp(mode, "TRANSMITTER") != 0) && (strcmp(mode, "RECEIVER") != 0)){
+    printf("ERROR:llopen: invalid mode: %s\n", mode);
+    exit(-1);
+  }
+
 
   char portstring[] = "/dev/ttyS";
   char *portnum;
@@ -94,7 +102,7 @@ int llopen(int port, UserMode mode){
       exit(-1);
     }
 
-    if(mode == TRANSMITTER){
+    if(strcmp(mode, "TRANSMITTER") == 0) {
       /* transmitter stuff: send SET and stuff */
 
       retry_counter = 0;

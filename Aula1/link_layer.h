@@ -3,7 +3,7 @@
 
 typedef enum {TRANSMITTER, RECEIVER} UserMode;
 
-int llopen(int port, UserMode mode);
+int llopen(int port, char* mode);
 int llwrite(int fd, char *buffer, int len);
 int llread(int fd, char *buffer);
 int llclose(int fd);
