@@ -47,10 +47,9 @@ int llopen(int port, UserMode mode){
 
   unsigned char set_message[5];
 
-  int fd,c, res;
+  int fd, res;
   struct termios oldtio,newtio;
   char buf[255];
-  int i, sum = 0, speed = 0;
 
   /*
     Open serial port device for reading and writing and not as controlling tty
@@ -140,6 +139,12 @@ int llopen(int port, UserMode mode){
 
 }
 
-int llwrite(int fd, char *buffer, int len){}
-int llread(int fd, char *buffer){}
-int llclose(int fd){}
+int llwrite(int fd, char *buffer, int len){
+  return 0;
+}
+int llread(int fd, char *buffer){
+  return 0;
+}
+int llclose(int fd){
+  return 0;
+}

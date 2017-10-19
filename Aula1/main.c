@@ -19,7 +19,7 @@ int main(int argc, char** argv) {
 		exit(0);
 	}
 
-UserMode mode;
+//UserMode mode;
 llopen((*argv[1])-'0', TRANSMITTER);
 
 
