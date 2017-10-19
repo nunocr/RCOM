@@ -24,6 +24,8 @@ volatile int STOP=FALSE;
 #define A     0x03
 #define C_SET 0x03
 
+unsigned int retry_counter, state;
+
 int llopen(int port, UserMode mode){
 
   if(port != 0 && port != 1){
@@ -43,12 +45,7 @@ int llopen(int port, UserMode mode){
   char *serial = strcat(portstring, portnum);
   printf("Serial port: %s\n", serial);
 
-  unsigned char SET[5];
-  SET[0] = FLAG;
-  SET[1] = A;
-  SET[2] = C_SET;
-  SET[3] = SET[1] ^ SET[2];
-  SET[4] = FLAG;
+  unsigned char set_message[5];
 
   int fd,c, res;
   struct termios oldtio,newtio;
@@ -60,17 +57,15 @@ int llopen(int port, UserMode mode){
     because we don't want to get killed if linenoise sends CTRL-C.
   */
 
-    printf("\noi migo\n");
-
-    fd = open(serial, O_RDWR | O_NOCTTY );
-
+    if((fd = open(serial, O_RDWR | O_NOCTTY )) < 0){
+      printf("llopen()::could not open serial port %d\n", port);
+      exit(4);
+    }
 
     if (fd < 0 ) {
        perror(serial);
        exit(-1);
    }
-
-    printf("\n tudo bem?\n");
 
     if ( tcgetattr(fd,&oldtio) == -1) { /* save current port settings */
       perror("tcgetattr");
@@ -100,10 +95,32 @@ int llopen(int port, UserMode mode){
       exit(-1);
     }
 
+    if(mode == TRANSMITTER){
+      /* transmitter stuff: send SET and stuff */
+
+      retry_counter = 0;
+      state = SET_SEND;
+
+      set_message[0] = FLAG;
+      set_message[1] = A;
+      set_message[2] = C_SET;
+      set_message[3] = set_message[1] ^ set_message[2];
+      set_message[4] = FLAG;
+
+      write(*serial, set_message, sizeof(set_message));
+    }
+    else{
+      /* receiver stuff: state machine and stuff */
+    }
+
+
+
+
+
     printf("New termios structure set\n");
 
     //Send
-    printf("Message to send: %d\n", *SET & 0xff);
+    printf("Message to send: %d\n", *set_message & 0xff);
 
     res = write(fd, buf, strlen(buf) + 1);
     printf("\n%d bytes written\n", res);
