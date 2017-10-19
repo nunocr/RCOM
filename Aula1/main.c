@@ -19,9 +19,17 @@ int main(int argc, char** argv) {
 		exit(0);
 	}
 
-//UserMode mode;
-llopen((*argv[1])-'0', TRANSMITTER);
+	if((strcmp(argv[2], "TRANSMITTER") == 0) && strcmp(argv[2], "RECEIVER") == 0){
+		printf("ERROR: Invalid argument provided: %s", argv[2]);
+		exit(-1);
+	}
 
+if(strcmp(argv[2], "TRANSMITTER") == 0){
+	llopen((*argv[1])-'0', TRANSMITTER);
+}
+else{
+	llopen((*argv[1])-'0', RECEIVER);
+}
 
 	return 0;
 }
