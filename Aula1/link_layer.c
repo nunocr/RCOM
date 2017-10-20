@@ -43,7 +43,7 @@ int llopen(int port, char mode){
   unsigned char set_message[5];
   unsigned char byte;
 
-  int fd;
+  int fd, res;
   struct termios oldtio,newtio;
 
   /*
@@ -53,7 +53,7 @@ int llopen(int port, char mode){
 
     if((fd = open(serial_name, O_RDWR | O_NOCTTY )) < 0){
       printf("llopen()::could not open serial port %d\n", port);
-      exit(4);
+      exit(-1);
     }
 
     if (fd < 0 ) {
@@ -98,18 +98,17 @@ int llopen(int port, char mode){
       retry_counter = 0;
       state = SET_SEND;
 
-      printf("oi mig\n");
-
+	  printf("Sending SET message...\n");
+	  
       set_message[0] = FLAG;
       set_message[1] = A;
       set_message[2] = C_SET;
       set_message[3] = set_message[1] ^ set_message[2];
       set_message[4] = FLAG;
 
-      write(*serial_name, set_message, sizeof(set_message));
-    }
-    
-    
+      res = write(fd, set_message, sizeof(set_message));
+	  printf("llopen:write: %d bytes written\n", res);
+	  }
     
     
     
@@ -187,7 +186,7 @@ int llopen(int port, char mode){
 	  ua_message[0] = FLAG;
 	  ua_message[1] = A;
 	  ua_message[2] = UA;
-	  ua_message[3] = UA ^ set_message[1] ^ set_message[2];
+	  ua_message[3] = UA ^ A;
 	  ua_message[4] = FLAG;
 	  
 	  if(write(fd, ua_message, sizeof(ua_message)) == 0){
