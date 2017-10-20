@@ -135,7 +135,7 @@ int llopen(int port, char mode){
 					state = FLAG_RCV;
 					printf("First FLAG processed successfully: %02x\n", byte);
 				}
-				else state = START;
+				else { state = START; printf("START if 1\n"); }
 				break;
 				
 			case FLAG_RCV:
@@ -143,8 +143,8 @@ int llopen(int port, char mode){
 					state = A_RCV;
 					printf("A processed successfully: %02x\n", byte);
 				}
-				else if(byte == FLAG) state = FLAG_RCV;
-				else state = START;
+				else if(byte == FLAG){ state = FLAG_RCV; printf("FLAG_RCV if 1\n"); }
+				else{ state = START; printf("FLAG_RCV if 2\n"); }
 				break;
 				
 			case A_RCV:
@@ -152,8 +152,8 @@ int llopen(int port, char mode){
 					state = C_RCV;
 					printf("C_SET processed successfully: %02x\n", byte);
 				}
-				else if(byte == FLAG) state = FLAG_RCV;
-				else state = START;
+				else if(byte == FLAG){ state = FLAG_RCV; printf("A_RCV if 1\n"); }
+				else{ state = START; printf("A_RCV if 2\n"); }
 				break;
 				
 			case C_RCV:
@@ -161,8 +161,8 @@ int llopen(int port, char mode){
 					state = BCC_OK;
 					printf("BCC processed successfully: %02x\n", byte);
 				}
-				else if(byte == FLAG) state = FLAG_RCV;
-				else state = START;
+				else if(byte == FLAG){ state = FLAG_RCV; printf("\nC_RCV if 1\n"); }
+				else { state = START; printf("\nC_RCV if 2\n"); }
 				break;
 				
 			case BCC_OK:
@@ -170,7 +170,7 @@ int llopen(int port, char mode){
 					state = END;
 					printf("Last FLAG processed successfully: %02x\n", byte);
 				}
-				else state = START;
+				else { state = START; printf("BCC_OK if 1\n"); }
 				break;
 				
 			case END:
