@@ -17,7 +17,7 @@
 volatile int STOP=FALSE;
 
 
-unsigned int retry_counter, state;
+unsigned int retry_counter, state, connected = FALSE;
 
 int llopen(int port, char mode){
 
@@ -96,18 +96,88 @@ int llopen(int port, char mode){
     if(mode == TRANSMITTER){
 
       retry_counter = 0;
-      state = SET_SEND;
+      connected = 0;
+      state = START;
 
 	  printf("Sending SET message...\n");
 
-      /*set_message[0] = FLAG;
+      /*
+      set_message[0] = FLAG;
       set_message[1] = A;
       set_message[2] = C_SET;
       set_message[3] = set_message[1] ^ set_message[2];
-      set_message[4] = FLAG;*/
+      set_message[4] = FLAG;
+      */
 
       res = write(fd, set_message, sizeof(set_message));
 	  printf("llopen:write: %d bytes written\n", res);
+	  
+	  while(!connected){
+		if(state != END){
+			read(fd, &byte, sizeof(byte));
+			printf("Read UA byte: %02x\n", byte);
+		}
+		
+		printf("Received State: %d\n", state);
+		
+		switch(state){
+			
+			case START:
+				if(byte == FLAG){
+					state = FLAG_RCV;
+					printf("UA First FLAG processed successfully: %02x\n", byte);
+				}
+				else state = START;
+				break;
+				
+			case FLAG_RCV:
+				if(byte == A){
+					state = A_RCV;
+					printf("UA A processed successfully: %02x\n", byte);
+				}
+				else if(byte == FLAG) state = FLAG_RCV;
+				else state = START;
+				break;
+				
+			case A_RCV:
+				if(byte == UA){
+					state = UA_RCV;
+					printf("UA C_SET processed successfully: %02x\n", byte);
+				}
+				else if(byte == FLAG) state = FLAG_RCV;
+				else state = START;
+				break;
+				
+			case UA_RCV:
+				if(byte == (A ^ UA)){
+					state = BCC_OK;
+					printf("UA UA_RCV processed successfully: %02x\n", byte);
+				}
+				else if(byte == FLAG) state = START;
+				else state = START;
+				break;
+				
+			case BCC_OK:
+				if(byte == FLAG){
+					state = END;
+					printf("UA Last FLAG processed successfully: %02x\n", byte);
+				}
+				break;
+				
+			case END:
+				printf("UA processed successfully.\n");
+				connected = TRUE;
+				break;
+				
+			default:
+				printf("You shouldnt be here. Leave.\n");
+				break;
+		}
+		
+	  }
+	  
+	  
+	  
 	  }
 
 
@@ -118,6 +188,7 @@ int llopen(int port, char mode){
     else{
 
       state = START;
+      STOP = FALSE;
 
       /* state machine for SET message processing */
       int j;

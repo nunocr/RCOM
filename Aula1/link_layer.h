@@ -16,6 +16,8 @@ int llclose(int fd);
 #define TRANSMITTER 0
 #define RECEIVER 1
 
+#define RETRY_NUM 4
+
 #define FLAG  0x7e
 #define A     0x03
 #define C_SET 0x03
@@ -23,11 +25,12 @@ int llclose(int fd);
 
 /* State Machine */
 #define SET_SEND 0
-#define START 1
+#define START    1
 #define FLAG_RCV 2
-#define A_RCV 3
-#define C_RCV 4
-#define BCC_OK 5
-#define END 6
+#define A_RCV 	 3
+#define C_RCV 	 4
+#define BCC_OK 	 5
+#define END 	 6
+#define UA_RCV 	 7
 
 #endif
