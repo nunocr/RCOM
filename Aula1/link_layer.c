@@ -121,7 +121,7 @@ int llopen(int port, char mode){
       
       /* state machine for SET message processing */
       
-      while(!=STOP){
+      while(!STOP){
       
       if(state != END){
 		  read(fd, &byte, 1);
