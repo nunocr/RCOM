@@ -124,60 +124,60 @@ int llopen(int port, char mode){
       while(state != END){
 		  read(fd, &byte, 1);
 		  printf("Current byte being proccessed: %02x\n", byte);
-	  }
 	  
-	  switch(state){
-	  
-		case START:
-			if(byte == FLAG){
-				state = FLAG_RCV;
-				printf("First FLAG processed successfully: %02x\n", byte);
-			}
-			else state = START;
-			break;
-			
-		case FLAG_RCV:
-			if(byte == A) {
-				state = A_RCV;
-				printf("A processed successfully: %02x\n", byte);
-			}
-			else if(byte == FLAG) state = FLAG_RCV;
-			else state = START;
-			break;
-			
-		case A_RCV:
-			if(byte == C_SET) {
-				state = C_RCV;
-				printf("C_SET processed successfully: %02x\n", byte);
-			}
-			else if(byte == FLAG) state = FLAG_RCV;
-			else state = START;
-			break;
-			
-		case C_RCV:
-			if(byte == (set_message[1] ^ set_message[2])){
-				state = BCC_OK;
-				printf("BCC processed successfully: %02x\n", byte);
-			}
-			else if(byte == FLAG) state = FLAG_RCV;
-			else state = START;
-			break;
-			
-		case BCC_OK:
-			if(byte == FLAG){
-				state = END;
-				printf("Last FLAG processed successfully: %02x\n", byte);
-			}
-			else state = START;
-			break;
-			
-		case END:
-			printf("Reached end of State Machine\n");
-			break;
-			
-		default:
-			printf("You shouldnt be here. go away.\n");
-			break;
+		  switch(state){
+		  
+			case START:
+				if(byte == FLAG){
+					state = FLAG_RCV;
+					printf("First FLAG processed successfully: %02x\n", byte);
+				}
+				else state = START;
+				break;
+				
+			case FLAG_RCV:
+				if(byte == A) {
+					state = A_RCV;
+					printf("A processed successfully: %02x\n", byte);
+				}
+				else if(byte == FLAG) state = FLAG_RCV;
+				else state = START;
+				break;
+				
+			case A_RCV:
+				if(byte == C_SET) {
+					state = C_RCV;
+					printf("C_SET processed successfully: %02x\n", byte);
+				}
+				else if(byte == FLAG) state = FLAG_RCV;
+				else state = START;
+				break;
+				
+			case C_RCV:
+				if(byte == (set_message[1] ^ set_message[2])){
+					state = BCC_OK;
+					printf("BCC processed successfully: %02x\n", byte);
+				}
+				else if(byte == FLAG) state = FLAG_RCV;
+				else state = START;
+				break;
+				
+			case BCC_OK:
+				if(byte == FLAG){
+					state = END;
+					printf("Last FLAG processed successfully: %02x\n", byte);
+				}
+				else state = START;
+				break;
+				
+			case END:
+				printf("Reached end of State Machine\n");
+				break;
+				
+			default:
+				printf("You shouldnt be here. go away.\n");
+				break;
+		  }
 	  }
 	  
 	  printf("\nSET processed successfully, sending UA message:\n");
