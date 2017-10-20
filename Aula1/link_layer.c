@@ -121,9 +121,12 @@ int llopen(int port, char mode){
       
       /* state machine for SET message processing */
       
-      while(state != END){
+      while(!=STOP){
+      
+      if(state != END){
 		  read(fd, &byte, 1);
 		  printf("Current byte being proccessed: %02x\n", byte);
+	  }
 	  
 		  switch(state){
 		  
@@ -172,6 +175,7 @@ int llopen(int port, char mode){
 				
 			case END:
 				printf("Reached end of State Machine\n");
+				STOP = TRUE;
 				break;
 				
 			default:
