@@ -111,11 +111,14 @@ int llopen(int port, char mode){
 
       res = write(fd, set_message, sizeof(set_message));
 	  printf("llopen:write: %d bytes written\n", res);
-	  
+	  	  
 	  while(!connected){
 		if(state != END){
-			read(fd, &byte, sizeof(byte));
-			printf("Read UA byte: %02x\n", byte);
+			printf("fd: %d | byte: %02x | sizeofbyte: %lu\n", fd, byte, sizeof(byte));
+			if(read(5, &byte, sizeof(byte)) == 0){
+				printf("Nothing read from UA.\n");
+			}
+			printf("Current byte being proccessed: %02x\n", byte);
 		}
 		
 		printf("Received State: %d\n", state);
@@ -127,7 +130,7 @@ int llopen(int port, char mode){
 					state = FLAG_RCV;
 					printf("UA First FLAG processed successfully: %02x\n", byte);
 				}
-				else state = START;
+				else { state = START; printf("UA START if 1\n"); }
 				break;
 				
 			case FLAG_RCV:
@@ -201,6 +204,7 @@ int llopen(int port, char mode){
       if(state != END){
 		  res = read(fd, &byte, sizeof(byte));
 		  printf("Current byte being proccessed: %02x\n", byte);
+		  printf("SET RECEIVE FD: %d\n", res);
 	  }
 
 		  switch(state){
@@ -232,9 +236,9 @@ int llopen(int port, char mode){
 				break;
 
 			case C_RCV:
-        printf("\nProcessing C_RCV\n");
-        printf("set_message[1]: %02x | set_message[2]: %02x\n", set_message[1], set_message[2]);
-        printf("Byte: %02x | SET: %02x\n", byte, set_message[3]);
+				printf("\nProcessing C_RCV\n");
+				printf("set_message[1]: %02x | set_message[2]: %02x\n", set_message[1], set_message[2]);
+				printf("Byte: %02x | SET: %02x\n", byte, set_message[3]);
 				if(byte == (set_message[1] ^ set_message[2])){
 					state = BCC_OK;
 					printf("BCC processed successfully: %02x\n", byte);
@@ -271,10 +275,22 @@ int llopen(int port, char mode){
 	  ua_message[3] = UA ^ A;
 	  ua_message[4] = FLAG;
 
+/*
 	  if(write(fd, ua_message, sizeof(ua_message)) == 0){
 		printf("ERROR:llopen: failed to send UA message.\n");
 		exit(-1);
 	  }
+*/  
+
+	  int k;
+	  for(k=0; k < 5; k++){
+		printf("UA[%d]: %02x\n", k, ua_message[k]);
+	  }
+
+	  int wfd;
+	  wfd = write(fd, ua_message, sizeof(ua_message));
+	  printf("UA Write FD: %d\n", wfd);
+	  
 	 printf("Connection established\n");
 	 printf("Serial port: %d", fd);
     }
