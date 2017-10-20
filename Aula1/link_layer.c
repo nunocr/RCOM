@@ -40,7 +40,7 @@ int llopen(int port, char mode){
   char *serial_name = strcat(portstring, portnum);
   printf("Serial port: %s\n", serial_name);
 
-  unsigned char set_message[5];
+  unsigned char set_message[5] = {FLAG, A, C_SET, A^C_SET, FLAG};
   unsigned char byte;
 
   int fd, res;
@@ -99,37 +99,41 @@ int llopen(int port, char mode){
       state = SET_SEND;
 
 	  printf("Sending SET message...\n");
-	  
-      set_message[0] = FLAG;
+
+      /*set_message[0] = FLAG;
       set_message[1] = A;
       set_message[2] = C_SET;
       set_message[3] = set_message[1] ^ set_message[2];
-      set_message[4] = FLAG;
+      set_message[4] = FLAG;*/
 
       res = write(fd, set_message, sizeof(set_message));
 	  printf("llopen:write: %d bytes written\n", res);
 	  }
-    
-    
-    
+
+
+
     //RECEIVER
-    
-    
+
+
     else{
-      
+
       state = START;
-      
+
       /* state machine for SET message processing */
-      
+      int j;
+      for(j=0; j<5; j++){
+        printf("START SET[%d]: %02x\n", j, set_message[j]);
+      }
+
       while(!STOP){
-      
+
       if(state != END){
-		  read(fd, &byte, 1);
+		  res = read(fd, &byte, sizeof(byte));
 		  printf("Current byte being proccessed: %02x\n", byte);
 	  }
-	  
+
 		  switch(state){
-		  
+
 			case START:
 				if(byte == FLAG){
 					state = FLAG_RCV;
@@ -137,7 +141,7 @@ int llopen(int port, char mode){
 				}
 				else { state = START; printf("START if 1\n"); }
 				break;
-				
+
 			case FLAG_RCV:
 				if(byte == A) {
 					state = A_RCV;
@@ -146,7 +150,7 @@ int llopen(int port, char mode){
 				else if(byte == FLAG){ state = FLAG_RCV; printf("FLAG_RCV if 1\n"); }
 				else{ state = START; printf("FLAG_RCV if 2\n"); }
 				break;
-				
+
 			case A_RCV:
 				if(byte == C_SET) {
 					state = C_RCV;
@@ -155,8 +159,11 @@ int llopen(int port, char mode){
 				else if(byte == FLAG){ state = FLAG_RCV; printf("A_RCV if 1\n"); }
 				else{ state = START; printf("A_RCV if 2\n"); }
 				break;
-				
+
 			case C_RCV:
+        printf("\nProcessing C_RCV\n");
+        printf("set_message[1]: %02x | set_message[2]: %02x\n", set_message[1], set_message[2]);
+        printf("Byte: %02x | SET: %02x\n", byte, set_message[3]);
 				if(byte == (set_message[1] ^ set_message[2])){
 					state = BCC_OK;
 					printf("BCC processed successfully: %02x\n", byte);
@@ -164,7 +171,7 @@ int llopen(int port, char mode){
 				else if(byte == FLAG){ state = FLAG_RCV; printf("\nC_RCV if 1\n"); }
 				else { state = START; printf("\nC_RCV if 2\n"); }
 				break;
-				
+
 			case BCC_OK:
 				if(byte == FLAG){
 					state = END;
@@ -172,27 +179,27 @@ int llopen(int port, char mode){
 				}
 				else { state = START; printf("BCC_OK if 1\n"); }
 				break;
-				
+
 			case END:
 				printf("Reached end of State Machine\n");
 				STOP = TRUE;
 				break;
-				
+
 			default:
 				printf("You shouldnt be here. go away.\n");
 				break;
 		  }
 	  }
-	  
+
 	  printf("\nSET processed successfully, sending UA message:\n");
-	  
+
 	  unsigned char ua_message[5];
 	  ua_message[0] = FLAG;
 	  ua_message[1] = A;
 	  ua_message[2] = UA;
 	  ua_message[3] = UA ^ A;
 	  ua_message[4] = FLAG;
-	  
+
 	  if(write(fd, ua_message, sizeof(ua_message)) == 0){
 		printf("ERROR:llopen: failed to send UA message.\n");
 		exit(-1);
@@ -200,7 +207,7 @@ int llopen(int port, char mode){
 	 printf("Connection established\n");
 	 printf("Serial port: %d", fd);
     }
-    
+
 	return fd;
 
 /*
@@ -223,7 +230,7 @@ int llopen(int port, char mode){
 
     close(fd);
     return 0;
-    
+
 */
 }
 
