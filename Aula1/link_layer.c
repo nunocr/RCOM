@@ -111,7 +111,7 @@ int llopen(int port, char mode){
 
       res = write(fd, set_message, sizeof(set_message));
 	  printf("llopen:write: %d bytes written\n", res);
-	  	  
+
 	  while(!connected){
 		if(state != END){
 			printf("fd: %d | byte: %02x | sizeofbyte: %lu\n", fd, byte, sizeof(byte));
@@ -120,11 +120,11 @@ int llopen(int port, char mode){
 			}
 			printf("Current byte being proccessed: %02x\n", byte);
 		}
-		
+
 		printf("Received State: %d\n", state);
-		
+
 		switch(state){
-			
+
 			case START:
 				if(byte == FLAG){
 					state = FLAG_RCV;
@@ -132,7 +132,7 @@ int llopen(int port, char mode){
 				}
 				else { state = START; printf("UA START if 1\n"); }
 				break;
-				
+
 			case FLAG_RCV:
 				if(byte == A){
 					state = A_RCV;
@@ -141,7 +141,7 @@ int llopen(int port, char mode){
 				else if(byte == FLAG) state = FLAG_RCV;
 				else state = START;
 				break;
-				
+
 			case A_RCV:
 				if(byte == UA){
 					state = UA_RCV;
@@ -150,7 +150,7 @@ int llopen(int port, char mode){
 				else if(byte == FLAG) state = FLAG_RCV;
 				else state = START;
 				break;
-				
+
 			case UA_RCV:
 				if(byte == (A ^ UA)){
 					state = BCC_OK;
@@ -159,28 +159,28 @@ int llopen(int port, char mode){
 				else if(byte == FLAG) state = START;
 				else state = START;
 				break;
-				
+
 			case BCC_OK:
 				if(byte == FLAG){
 					state = END;
 					printf("UA Last FLAG processed successfully: %02x\n", byte);
 				}
 				break;
-				
+
 			case END:
 				printf("UA processed successfully.\n");
 				connected = TRUE;
 				break;
-				
+
 			default:
 				printf("You shouldnt be here. Leave.\n");
 				break;
 		}
-		
+
 	  }
-	  
-	  
-	  
+
+
+
 	  }
 
 
@@ -280,7 +280,7 @@ int llopen(int port, char mode){
 		printf("ERROR:llopen: failed to send UA message.\n");
 		exit(-1);
 	  }
-*/  
+*/
 
 	  int k;
 	  for(k=0; k < 5; k++){
@@ -290,7 +290,7 @@ int llopen(int port, char mode){
 	  int wfd;
 	  wfd = write(fd, ua_message, sizeof(ua_message));
 	  printf("UA Write FD: %d\n", wfd);
-	  
+
 	 printf("Connection established\n");
 	 printf("Serial port: %d", fd);
     }
@@ -322,6 +322,19 @@ int llopen(int port, char mode){
 }
 
 int llwrite(int fd, char *buffer, int len){
+
+unsigned char i_frame[9];
+i_frame[0] = FLAG;
+i_frame[1] = A;
+i_frame[2] = /* C */;
+i_frame[3] = /* BCC1 */; C XOR A
+i_frame[4] = /* D1 */;
+i_frame[5] = /* DATA */;
+i_frame[6] = /* Dn */;
+i_frame[7] = /* BCC2 */; DATA XOR
+i_frame[8] = FLAG;
+
+
   return 0;
 }
 int llread(int fd, char *buffer){

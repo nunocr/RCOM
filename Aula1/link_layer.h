@@ -30,7 +30,12 @@ int llclose(int fd);
 #define A_RCV 	 3
 #define C_RCV 	 4
 #define BCC_OK 	 5
-#define END 	 6
+#define END 	   6
 #define UA_RCV 	 7
+
+/* I frame */
+#define ESC 0x7d
+#define SUB 0x20
+
 
 #endif
