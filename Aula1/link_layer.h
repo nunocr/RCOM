@@ -7,6 +7,8 @@ int llopen(int port, char mode);
 int llwrite(int fd, char *buffer, int len);
 int llread(int fd, char *buffer);
 int llclose(int fd);
+int stuffing(char * package, int length);
+int deStuffing(char * package, int length);
 
 #define BAUDRATE B38400
 #define _POSIX_SOURCE 1 /* POSIX compliant source */
@@ -30,12 +32,14 @@ int llclose(int fd);
 #define A_RCV 	 3
 #define C_RCV 	 4
 #define BCC_OK 	 5
-#define END 	   6
+#define END 	 6
 #define UA_RCV 	 7
 
 /* I frame */
-#define ESC 0x7d
-#define SUB 0x20
+#define ESC 	  0x7D
+#define SUB 	  0x20
+#define XOR_7E_20 0x5E
+#define XOR_7D_20 0x5D
 
 
 #endif

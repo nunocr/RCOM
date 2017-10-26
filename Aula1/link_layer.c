@@ -323,17 +323,18 @@ int llopen(int port, char mode){
 
 int llwrite(int fd, char *buffer, int len){
 
+/*
 unsigned char i_frame[9];
 i_frame[0] = FLAG;
 i_frame[1] = A;
-i_frame[2] = /* C */;
-i_frame[3] = /* BCC1 */; C XOR A
-i_frame[4] = /* D1 */;
-i_frame[5] = /* DATA */;
-i_frame[6] = /* Dn */;
-i_frame[7] = /* BCC2 */; DATA XOR
+i_frame[2] = C ;
+i_frame[3] = BCC1 ; C XOR A
+i_frame[4] = D1 ;
+i_frame[5] = DATA ;
+i_frame[6] = Dn ;
+i_frame[7] = BCC2 ; DATA XOR
 i_frame[8] = FLAG;
-
+*/
 
   return 0;
 }
@@ -343,3 +344,58 @@ int llread(int fd, char *buffer){
 int llclose(int fd){
   return 0;
 }
+
+int stuffing(char * package, int length){
+
+	int size = length;
+	int i;
+	for(i = 0; i < length;i++)
+	{
+		char oct = package[i]; //oct means byte
+		if(oct == FLAG || oct == ESC){
+			size++; 
+		}
+	}
+	if(size == length) //same size no need to stuff
+		return size;
+
+	for(i = 0; i < size; i++)
+	{
+		char oct = package[i];
+		if(oct == FLAG || oct == ESC) 
+		{
+			memmove(package + i + 2, package + i+1, size - i); //moving everything to the front
+			if (oct == FLAG) {
+				package[i+1] = XOR_7E_20;
+				package[i] = ESC ;
+			}
+			else package[i+1] = XOR_7D_20;
+		} 
+	}
+	return size; //return the new size of the package
+}
+
+int deStuffing( char * package, int length){
+
+	int size = length;
+	int i;
+	for(i = 0; i < size; i++)
+	{
+		char oct = package[i]; //oct means byte
+		if(oct == ESC)
+		{
+			if(package[i+1] == XOR_7E_20){
+				package[i] = FLAG; //7E means that was a previous byte flag in there
+				memmove(package + i + 1, package + i + 2,length - i + 2);
+
+			}
+			else if(package[i+1] == XOR_7D_20){
+				memmove(package + i + 1, package + i + 2,length - i + 2); //was a previous ESC in there, just need to remove
+			}
+			size--; 
+		}
+	}
+
+	return size; //return the new size of the package
+}
+
