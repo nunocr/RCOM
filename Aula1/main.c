@@ -32,9 +32,11 @@ else{
 	llopen((*argv[1])-'0', RECEIVER);
 }
 */
-
+int nomedavariavel;
 if(strcmp(argv[2], "TRANSMITTER") == 0){
-	llopen((*argv[1])-'0', 0);
+	nomedavariavel = llopen((*argv[1])-'0', 0);
+	unsigned char buffer[3];
+	llwrite(nomedavariavel, buffer, sizeof(buffer));
 }
 else if(strcmp(argv[2], "RECEIVER") == 0) {
 	llopen((*argv[1])-'0', 1);

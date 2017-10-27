@@ -115,7 +115,7 @@ int llopen(int port, char mode){
 	  while(!connected){
 		if(state != END){
 			printf("fd: %d | byte: %02x | sizeofbyte: %lu\n", fd, byte, sizeof(byte));
-			if(read(5, &byte, sizeof(byte)) == 0){
+			if(read(fd, &byte, sizeof(byte)) == 0){
 				printf("Nothing read from UA.\n");
 			}
 			printf("Current byte being proccessed: %02x\n", byte);
@@ -335,6 +335,23 @@ i_frame[6] = Dn ;
 i_frame[7] = BCC2 ; DATA XOR
 i_frame[8] = FLAG;
 */
+	unsigned char i_frame[3];
+	i_frame[0] = 0x55;
+	i_frame[1] = 0x7D;
+	i_frame[2] = 0x7E;
+	
+	int newsize = stuffing(&i_frame, sizeof(i_frame));
+	
+	for(unsigned int i=0; i<newsize; i++) //ou sizeof(*i_frame)
+	{
+		printf("%02X Valor de i_frame\n",i_frame[i]);
+	}
+	
+	newsize = deStuffing(&i_frame, sizeof(*i_frame));
+	for(unsigned int i=0; i<newsize; i++) //ou sizeof(*i_frame)
+	{
+		printf("%02X Valor de i_frame\n",i_frame[i]);
+	}
 
   return 0;
 }
