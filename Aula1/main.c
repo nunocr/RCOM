@@ -34,7 +34,14 @@ else{
 */
 
 if(strcmp(argv[2], "TRANSMITTER") == 0){
-	llopen((*argv[1])-'0', 0);
+	int descriptor;
+	char *buffer = malloc(sizeof(*buffer));
+
+	descriptor = llopen((*argv[1])-'0', 0);
+	llwrite(descriptor, buffer, sizeof(buffer));
+
+	free(buffer);
+
 }
 else if(strcmp(argv[2], "RECEIVER") == 0) {
 	llopen((*argv[1])-'0', 1);

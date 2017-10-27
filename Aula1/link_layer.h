@@ -7,8 +7,9 @@ int llopen(int port, char mode);
 int llwrite(int fd, char *buffer, int len);
 int llread(int fd, char *buffer);
 int llclose(int fd);
-int stuffing(char * package, int length);
+char* stuffing(char * package, int length);
 int deStuffing(char * package, int length);
+void switchC1();
 
 #define BAUDRATE B38400
 #define _POSIX_SOURCE 1 /* POSIX compliant source */
