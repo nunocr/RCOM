@@ -121,14 +121,14 @@ if(mode == TRANSMITTER){
   res = write(fd, set_message, sizeof(set_message));
   printf("llopen:write: %d bytes written\n", res);
 
-  while(!connected){
-    if(state != END){
-      printf("fd: %d | byte: %02x | sizeofbyte: %lu\n", fd, byte, sizeof(byte));
-      if(read(fd, &byte, sizeof(byte)) == 0){
-        printf("Nothing read from UA.\n");
-      }
-      printf("Current byte being proccessed: %02x\n", byte);
-    }
+	  while(!connected){
+		if(state != END){
+			printf("fd: %d | byte: %02x | sizeofbyte: %lu\n", fd, byte, sizeof(byte));
+			if(read(fd, &byte, sizeof(byte)) == 0){
+				printf("Nothing read from UA.\n");
+			}
+			printf("Current byte being proccessed: %02x\n", byte);
+		}
 
     printf("Received State: %d\n", state);
 
@@ -366,9 +366,24 @@ int llwrite(int fd, char *buffer, int len){
   for(meme = 0; meme < 10; meme++){
     printf("Frame[%d]: %02x\n",meme, frame_to_send[meme]);
   }
-
 /*
-  deStuffing(new_frame, strlen(new_frame));
+	unsigned char i_frame[3];
+	i_frame[0] = 0x55;
+	i_frame[1] = 0x7D;
+	i_frame[2] = 0x7E;
+
+	int newsize = stuffing(&i_frame, sizeof(i_frame));
+
+	for(unsigned int i=0; i<newsize; i++) //ou sizeof(*i_frame)
+	{
+		printf("%02X Valor de i_frame\n",i_frame[i]);
+	}
+
+	newsize = deStuffing(&i_frame, sizeof(*i_frame));
+	for(unsigned int i=0; i<newsize; i++) //ou sizeof(*i_frame)
+	{
+		printf("%02X Valor de i_frame\n",i_frame[i]);
+	}
 
   printf("\nI-Frame post-deStuffing: %lu\n", strlen(new_frame));
   int meme3;

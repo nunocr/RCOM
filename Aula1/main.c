@@ -32,7 +32,6 @@ else{
 	llopen((*argv[1])-'0', RECEIVER);
 }
 */
-
 if(strcmp(argv[2], "TRANSMITTER") == 0){
 	int descriptor;
 	char *buffer = malloc(sizeof(*buffer));
