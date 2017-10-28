@@ -187,15 +187,11 @@ if(mode == TRANSMITTER){
     }
 
   }
-
-
-
 }
 
 
 
 //RECEIVER
-
 
 else{
 
@@ -357,7 +353,7 @@ int llwrite(int fd, char *buffer, int len){
   frame_to_send[1] = A;
   frame_to_send[2] = C1;
   frame_to_send[3] = C1^A; // BCC1
-  frame_to_send[8] = new_frame[0] ^ new_frame[1] ^ new_frame[2];
+  frame_to_send[8] = new_frame[0] ^ new_frame[1] ^ new_frame[2]; //BCC2
   frame_to_send[9] = FLAG;
 
   memmove(frame_to_send+4, new_frame, strlen(new_frame));
@@ -366,43 +362,111 @@ int llwrite(int fd, char *buffer, int len){
   for(meme = 0; meme < 10; meme++){
     printf("Frame[%d]: %02x\n",meme, frame_to_send[meme]);
   }
-/*
-	unsigned char i_frame[3];
-	i_frame[0] = 0x55;
-	i_frame[1] = 0x7D;
-	i_frame[2] = 0x7E;
 
-	int newsize = stuffing(&i_frame, sizeof(i_frame));
 
-	for(unsigned int i=0; i<newsize; i++) //ou sizeof(*i_frame)
-	{
-		printf("%02X Valor de i_frame\n",i_frame[i]);
-	}
+	//send i_frame to llread
+		sleep(2);
+	  int ret = write(fd, frame_to_send, sizeof(frame_to_send));
+	  printf("llopen:write: %d bytes written\n", ret);
 
-	newsize = deStuffing(&i_frame, sizeof(*i_frame));
-	for(unsigned int i=0; i<newsize; i++) //ou sizeof(*i_frame)
-	{
-		printf("%02X Valor de i_frame\n",i_frame[i]);
-	}
-
-  printf("\nI-Frame post-deStuffing: %lu\n", strlen(new_frame));
-  int meme3;
-  for(meme3 = 0; meme3 < strlen(new_frame); meme3++){
-    printf("Frame[%d]: %02x\n",meme3, new_frame[meme3]);
-  }
-*/
   return 0;
 }
 
 
 int llread(int fd, char *buffer){
+
+	printf("Reading I Frame...\n");
+
+	unsigned char byte;
+	unsigned char BCC2; // = calculateBCC2(buffer, sizeof(buffer));
+
+	while(!STOP){
+
+    if(state != END)
+			if(read(fd, &buffer, sizeof(buffer)) == 0){
+				printf("Error: Nothing read from llread.\n");
+			}
+      printf("Current byte being proccessed: %02x\n", byte);
+    }
+
+    switch(state){
+
+      case START:
+      if(byte == FLAG){
+        state = FLAG_RCV;
+        printf("First FLAG processed successfully: %02x\n", byte);
+      }
+      else { state = START; printf("START if 1\n"); }
+      break;
+
+      case FLAG_RCV:
+      if(byte == A) {
+        state = A_RCV;
+        printf("A processed successfully: %02x\n", byte);
+      }
+      else if(byte == FLAG){ state = FLAG_RCV; printf("FLAG_RCV if 1\n"); }
+      else{ state = START; printf("FLAG_RCV if 2\n"); }
+      break;
+
+      case A_RCV:
+      if(byte == C1) {
+        state = C1_RCV;
+        printf("C1 processed successfully: %02x\n", byte);
+      }
+      else if(byte == FLAG){ state = FLAG_RCV; printf("A_RCV if 1\n"); }
+      else{ state = START; printf("A_RCV if 2\n"); }
+      break;
+
+      case C1_RCV:
+      printf("\nProcessing C1_RCV\n");
+      if(byte == (C1^A)){ //C^A
+        state = BCC1_OK;
+        printf("BCC1 processed successfully: %02x\n", byte);
+      }
+      else if(byte == FLAG){ state = FLAG_RCV; printf("\nC1_RCV if 1\n"); }
+      else { state = START; printf("\nC1_RCV if 2\n"); }
+      break;
+
+      case BCC1_OK:
+      if(byte == FLAG){
+        state = END;
+        printf("Last FLAG processed successfully: %02x\n", byte);
+      }
+      else { state = DATA_PROCESSING; printf("Starting to proccess Data from I Frame...\n"); }
+      break;
+
+			case DATA_PROCESSING:
+			if(byte == BCC2){
+				state = BCC2_OK;
+				printf("Finished processing Data: %02x\n", byte);
+			}
+			else { state = DATA_PROCESSING; printf("Processing data...\n"); }
+			break;
+
+			case BCC2_OK:
+			if(byte == FLAG){
+				state = END;
+				printf("BCC2 processed successfully: %02x\n", byte);
+			}
+			else{ state = START; printf("Failed BCC2 processing: %02x\n", byte); }
+			break;
+
+      case END:
+      printf("Reached end of I Frame Processing State Machine\n");
+      STOP = TRUE;
+      break;
+		}
+
   return 0;
 }
+
+
 int llclose(int fd){
   return 0;
 }
 
 char* stuffing(char * package, int length){
+
 
   int i, new_length = length;
   for(i = 0; i < length; i++){
@@ -464,7 +528,7 @@ else package[i+1] = XOR_7D_20;
 return size; //return the new size of the package*/
 }
 
-int deStuffing( char * package, int length){
+int deStuffing(char * package, int length){
 
   int size = length;
   int i;
@@ -486,4 +550,14 @@ int deStuffing( char * package, int length){
   }
 
   return size; //return the new size of the package
+}
+
+unsigned char calculateBCC2(unsigned char* buffer, unsigned int size) {
+	unsigned char BCC2 = 0;
+
+	int i = 0;
+	for (i = 0; i < size; i++)
+		BCC2 ^= buffer[i];
+
+	return BCC2;
 }
