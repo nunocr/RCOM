@@ -15,6 +15,7 @@
 
 
 unsigned char C1 = 0x40;
+unsigned char BCC2 = 0x00;
 
 void switchC1(){
 	if (C1 == 0x00) C1 = 0x40;
@@ -35,12 +36,11 @@ int llopen(int port, char mode){
     exit(-1);
   }
 
-  /*
-  if(mode != TRANSMITTER && mode != RECEIVER){
-  printf("Usage: invalid mode: %d\n", mode);
-  exit(-1);
+    if((mode != TRANSMITTER) && (mode != RECEIVER)){
+		  printf("Usage: invalid mode: %d\n", mode);
+		  exit(-1);
 }
-*/
+
 
 char portstring[] = "/dev/ttyS";
 char *portnum;
@@ -348,21 +348,27 @@ int llwrite(int fd, char *buffer, int len){
   }
 
   char* frame_to_send = malloc(6 + strlen(new_frame));
+	//BCC2 = new_frame[0] ^ new_frame[1] ^ new_frame[2];
 
   frame_to_send[0] = FLAG;
   frame_to_send[1] = A;
   frame_to_send[2] = C1;
   frame_to_send[3] = C1^A; // BCC1
-  frame_to_send[8] = new_frame[0] ^ new_frame[1] ^ new_frame[2]; //BCC2
   frame_to_send[9] = FLAG;
 
   memmove(frame_to_send+4, new_frame, strlen(new_frame));
+
+	BCC2 = frame_to_send[2];
+	for(meme = 3; meme < strlen(frame_to_send) - 1; meme++){
+		BCC2 ^= frame_to_send[meme];
+	}
+
+	frame_to_send[8] = BCC2;
 
   printf("\nI-Frame to be sent to llread: %lu\n", strlen(frame_to_send));
   for(meme = 0; meme < 10; meme++){
     printf("Frame[%d]: %02x\n",meme, frame_to_send[meme]);
   }
-
 
 	//send i_frame to llread
 		sleep(2);
@@ -375,86 +381,100 @@ int llwrite(int fd, char *buffer, int len){
 
 int llread(int fd, char *buffer){
 
-	printf("Reading I Frame...\n");
+	printf("\nReading I Frame...\n");
+
+	state = START;
+	STOP = FALSE;
 
 	unsigned char byte;
-	unsigned char BCC2; // = calculateBCC2(buffer, sizeof(buffer));
+	// = calculateBCC2(buffer, sizeof(buffer));
 
 	while(!STOP){
 
-    if(state != END)
-			if(read(fd, &buffer, sizeof(buffer)) == 0){
+    if(state != END){
+/*
+		  int test;
+		  test = read(fd, &buffer, sizeof(buffer));
+			printf("\n\nLLREAD: READ RESULT: %d\n\n", test);
+			}
+*/
+			if(read(fd, &byte, sizeof(byte)) == 0){
 				printf("Error: Nothing read from llread.\n");
+				exit(-1);
 			}
       printf("Current byte being proccessed: %02x\n", byte);
-    }
+		}
+	    switch(state){
 
-    switch(state){
+	      case START:
+	      if(byte == FLAG){
+	        state = FLAG_RCV;
+	        printf("First FLAG processed successfully: %02x\n", byte);
+	      }
+	      else { state = START; printf("START if 1\n"); }
+	      break;
 
-      case START:
-      if(byte == FLAG){
-        state = FLAG_RCV;
-        printf("First FLAG processed successfully: %02x\n", byte);
-      }
-      else { state = START; printf("START if 1\n"); }
-      break;
+	      case FLAG_RCV:
+	      if(byte == A) {
+	        state = A_RCV;
+	        printf("A processed successfully: %02x\n", byte);
+	      }
+	      else if(byte == FLAG){ state = FLAG_RCV; printf("FLAG_RCV if 1\n"); }
+	      else{ state = START; printf("FLAG_RCV if 2\n"); }
+	      break;
 
-      case FLAG_RCV:
-      if(byte == A) {
-        state = A_RCV;
-        printf("A processed successfully: %02x\n", byte);
-      }
-      else if(byte == FLAG){ state = FLAG_RCV; printf("FLAG_RCV if 1\n"); }
-      else{ state = START; printf("FLAG_RCV if 2\n"); }
-      break;
+	      case A_RCV:
+	      if(byte == C1) {
+	        state = C1_RCV;
+	        printf("C1 processed successfully: %02x\n", byte);
+	      }
+	      else if(byte == FLAG){ state = FLAG_RCV; printf("A_RCV if 1\n"); }
+	      else{ state = START; printf("A_RCV if 2\n"); }
+	      break;
 
-      case A_RCV:
-      if(byte == C1) {
-        state = C1_RCV;
-        printf("C1 processed successfully: %02x\n", byte);
-      }
-      else if(byte == FLAG){ state = FLAG_RCV; printf("A_RCV if 1\n"); }
-      else{ state = START; printf("A_RCV if 2\n"); }
-      break;
+	      case C1_RCV:
+	      printf("Processing C1_RCV\n");
+	      if(byte == (C1^A)){ //C^A
+	        state = BCC1_OK;
+	        printf("BCC1 processed successfully: %02x\n", byte);
+	      }
+	      else if(byte == FLAG){ state = FLAG_RCV; printf("\nC1_RCV if 1\n"); }
+	      else { state = START; printf("\nC1_RCV if 2\n"); }
+	      break;
 
-      case C1_RCV:
-      printf("\nProcessing C1_RCV\n");
-      if(byte == (C1^A)){ //C^A
-        state = BCC1_OK;
-        printf("BCC1 processed successfully: %02x\n", byte);
-      }
-      else if(byte == FLAG){ state = FLAG_RCV; printf("\nC1_RCV if 1\n"); }
-      else { state = START; printf("\nC1_RCV if 2\n"); }
-      break;
+	      case BCC1_OK:
+				printf("Processing BCC1_OK\n");
+	      if(byte == FLAG){
+	        state = END;
+	        printf("BCC1_OK processing failure: %02x\n", byte);
+	      }
+	      else { state = DATA_PROCESSING; printf("Starting to proccess Data from I Frame...\n"); }
+	      break;
 
-      case BCC1_OK:
-      if(byte == FLAG){
-        state = END;
-        printf("Last FLAG processed successfully: %02x\n", byte);
-      }
-      else { state = DATA_PROCESSING; printf("Starting to proccess Data from I Frame...\n"); }
-      break;
+				case DATA_PROCESSING:
+				if(byte == BCC2){
+					state = BCC2_OK;
+					printf("Finished processing Data: %02x\n", byte);
+				}
+				else {
+					state = DATA_PROCESSING;
+					printf("We aiming 4 dat %02x BCC2 boyyyyeee\n", BCC2);
+					printf("Processing data...\n"); }
+				break;
 
-			case DATA_PROCESSING:
-			if(byte == BCC2){
-				state = BCC2_OK;
-				printf("Finished processing Data: %02x\n", byte);
+				case BCC2_OK:
+				if(byte == FLAG){
+					state = END;
+					printf("BCC2 processed successfully: %02x\n", byte);
+				}
+				else{ state = START; printf("Failed BCC2 processing: %02x\n", byte); }
+				break;
+
+	      case END:
+	      printf("Reached end of I Frame Processing State Machine\n");
+	      STOP = TRUE;
+	      break;
 			}
-			else { state = DATA_PROCESSING; printf("Processing data...\n"); }
-			break;
-
-			case BCC2_OK:
-			if(byte == FLAG){
-				state = END;
-				printf("BCC2 processed successfully: %02x\n", byte);
-			}
-			else{ state = START; printf("Failed BCC2 processing: %02x\n", byte); }
-			break;
-
-      case END:
-      printf("Reached end of I Frame Processing State Machine\n");
-      STOP = TRUE;
-      break;
 		}
 
   return 0;

@@ -1,9 +1,9 @@
 #include "application_layer.h"
 #include "link_layer.h"
 
-static int mode = 0; //different modes for different data
-static int PACK_SIZE = 0;
-static int TRAMA_SIZE = 0;
+//static int mode = 0; //different modes for different data
+//static int PACK_SIZE = 0;
+//static int TRAMA_SIZE = 0;
 static int DEBUG_FLAG = 0;
 
 int mainn(int argc, char** argv)
@@ -79,7 +79,7 @@ int transmitter(char * fileName) //envio da trama com SET
   char * packStart = malloc(1);
   create_start_package(1, fileName, fileSize, packStart);
 
-
+  return 0;
 }
 
 int open_file(FILE * file, char * fileName)

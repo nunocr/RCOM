@@ -19,35 +19,34 @@ int main(int argc, char** argv) {
 		exit(0);
 	}
 
-int descriptor;
-char *buffer = malloc(sizeof(*buffer));
-
 if(strcmp(argv[2], "TRANSMITTER") == 0){
 
-	descriptor = llopen((*argv[1])-'0', 0);
-	printf("\nmain.c: Transmitter: descriptor after llopen: %d\n", descriptor);
-	llwrite(descriptor, buffer, sizeof(buffer));
-  printf("\nmain.c: Transmitter: descriptor after llwrite: %d\n", descriptor);
-	free(buffer);
+  int t_fd;
+	char *t_buf = malloc(sizeof(*t_buf));
+
+	t_fd = llopen((*argv[1])-'0', 0);
+	printf("\nmain.c: Transmitter: descriptor after llopen: %d\n", t_fd);
+	llwrite(t_fd, t_buf, sizeof(t_buf));
+  printf("\nmain.c: Transmitter: descriptor after llwrite: %d\n", t_fd);
+	free(t_buf);
 
 }
 
 else if(strcmp(argv[2], "RECEIVER") == 0) {
 
-	int newdesc;
-	char *newbuf = malloc(sizeof(*newbuf));
+	int r_fd;
+	char *r_buf = malloc(sizeof(*r_buf));
 
-	//descriptor = llopen((*argv[1])-'0', 1);
-	newdesc = llopen((*argv[1])-'0', 1);
-	printf("\nmain.c: Receiver: descriptor after llopen: %d\n", newdesc);
-	//if(llread(descriptor, buffer) == 0){
-	if(llread(newdesc, newbuf) == 0){
+	r_fd = llopen((*argv[1])-'0', 1);
+	printf("\nmain.c: Receiver: descriptor after llopen: %d\n", r_fd);
+	if(llread(r_fd, r_buf) == 0){
 		printf("\nError: main.c: Receiver: Nothing to read from llread.\n");
 	}
-	printf("\nmain.c: Receiver: descriptor after llread: %d\n", newdesc);
-	free(newbuf);
+	printf("\nmain.c: Receiver: descriptor after llread: %d\n", r_fd);
+	free(r_buf);
 
 }
+
 else{
 	printf("\nERROR: Invalid argument provided: %s\n", argv[2]);
 	exit(-1);
