@@ -41,7 +41,6 @@ int llopen(int port, char mode){
 		  exit(-1);
 }
 
-
 char portstring[] = "/dev/ttyS";
 char *portnum;
 if(port == 1) portnum = "1";
@@ -382,9 +381,9 @@ int llwrite(int fd, char *buffer, int len){
   }
 
 	//send i_frame to llread
-		sleep(2);
-	  int ret = write(fd, frame_to_send, sizeof(frame_to_send));
-	  printf("llopen:write: %d bytes written\n", ret);
+		sleep(1);
+	  int ret = write(fd, frame_to_send, strlen(frame_to_send));
+	  printf("llwrite:write: %d bytes written\n", ret);
 
   return 0;
 }
@@ -423,6 +422,7 @@ int llread(int fd, char *buffer){
 	      if(byte == FLAG){
 	        state = FLAG_RCV;
 					buff[size] = byte;
+					printf("[%d]th element of buff: %02x\n", size, buff[size]);
 					size++;
 	        printf("First FLAG processed successfully: %02x\n", byte);
 	      }
@@ -433,6 +433,7 @@ int llread(int fd, char *buffer){
 	      if(byte == A) {
 	        state = A_RCV;
 					buff[size] = byte;
+					printf("[%d]th element of buff: %02x\n", size, buff[size]);
 					size++;
 	        printf("A processed successfully: %02x\n", byte);
 	      }
@@ -444,6 +445,7 @@ int llread(int fd, char *buffer){
 	      if(byte == C1) {
 	        state = C1_RCV;
 					buff[size] = byte;
+					printf("[%d]th element of buff: %02x\n", size, buff[size]);
 					size++;
 	        printf("C1 processed successfully: %02x\n", byte);
 	      }
@@ -453,9 +455,10 @@ int llread(int fd, char *buffer){
 
 	      case C1_RCV:
 	      printf("Processing C1_RCV\n");
-	      if(byte == (C1^A)){ //C^A
+	      if(byte == (C1^A)){
 	        state = BCC1_OK;
 					buff[size] = byte;
+					printf("[%d]th element of buff: %02x\n", size, buff[size]);
 					size++;
 	        printf("BCC1 processed successfully: %02x\n", byte);
 	      }
@@ -468,33 +471,42 @@ int llread(int fd, char *buffer){
 	      if(byte == FLAG){
 	        state = END;
 					buff[size] = byte;
+					printf("[%d]th element of buff: %02x\n", size, buff[size]);
 					size++;
 	        printf("BCC1_OK processing failure: %02x\n", byte);
 	      }
-	      else { state = DATA_PROCESSING; printf("Starting to proccess Data from I Frame...\n"); }
+	      else {
+					state = DATA_PROCESSING;
+					buff[size] = byte;
+					printf("[%d]th element of buff: %02x\n", size, buff[size]);
+					size++;
+				  printf("Starting to proccess Data from I Frame...\n");
+				}
 	      break;
 
 				case DATA_PROCESSING:
-/*
-				if(byte == BCC2){
-					state = BCC2_OK;
-*/
 				if(byte == FLAG){
 					state = END;
 					buff[size] = byte;
+					printf("[%d]th element of buff: %02x\n", size, buff[size]);
 					size++;
 					printf("Finished processing Data: %02x\n", byte);
 				}
 				else {
 					state = DATA_PROCESSING;
-					//printf("We aiming 4 dat %02x BCC2 boyyyyeee\n", BCC2);
-					printf("Processing data...\n"); }
+					buff[size] = byte;
+					printf("[%d]th element of buff: %02x\n", size, buff[size]);
+					size++;
+					//printf("Expected BCC2: %02x\n", BCC2);
+					printf("Processing data...\n");
+				}
 				break;
 
 				case BCC2_OK:
 				if(byte == FLAG){
 					state = END;
 					buff[size] = byte;
+					printf("[%d]th element of buff: %02x\n", size, buff[size]);
 					size++;
 					printf("BCC2 processed successfully: %02x\n", byte);
 				}
@@ -520,6 +532,10 @@ int llread(int fd, char *buffer){
 	for(k=0; k < strlen(buff); k++){
 		printf("buff[%d]: %02x\n", k, buff[k]);
 	}
+
+//Send RR confirmation packet
+
+
 
   return 0;
 }
