@@ -15,7 +15,7 @@
 
 
 unsigned char C1 = 0x40;
-unsigned char BCC2 = 0x00;
+//unsigned char BCC2 = 0x00;
 
 void switchC1(){
 	if (C1 == 0x00) C1 = 0x40;
@@ -84,7 +84,7 @@ newtio.c_oflag = 0;
 newtio.c_lflag = 0;
 
 newtio.c_cc[VTIME]    = 0;   /* inter-character timer unused */
-newtio.c_cc[VMIN]     = 5;   /* blocking read until 5 chars received */
+newtio.c_cc[VMIN]     = 1;   /* blocking read until 5 chars received */
 
 /*
 VTIME e VMIN devem ser alterados de forma a proteger com um temporizador a
@@ -334,17 +334,25 @@ int llwrite(int fd, char *buffer, int len){
   i_frame[1] = 0x7d; //DATA
   i_frame[2] = 0x55; //Dn
 
+
+	unsigned char BCC2 = 0;
+	int h;
+	for(h=0; h < strlen(i_frame); h++){
+		BCC2 ^= i_frame[h];
+	}
+	printf("\n\nBCC2: %02x\n\n", BCC2);
+
   printf("\nI-Frame pre-stuffing: %lu\n", strlen(i_frame));
-  int meme;
-  for(meme = 0; meme < strlen(i_frame); meme++){
-    printf("Frame[%d]: %02x\n",meme, i_frame[meme]);
+
+  for(h=0; h < strlen(i_frame); h++){
+    printf("Frame[%d]: %02x\n",h, i_frame[h]);
   }
 
   char* new_frame = stuffing(i_frame, strlen(i_frame));
 
   printf("\nI-Frame post-stuffing: %lu\n", strlen(new_frame));
-  for(meme = 0; meme < strlen(new_frame); meme++){
-    printf("Frame[%d]: %02x\n",meme, new_frame[meme]);
+  for(h=0; h < strlen(new_frame); h++){
+    printf("Frame[%d]: %02x\n",h, new_frame[h]);
   }
 
   char* frame_to_send = malloc(6 + strlen(new_frame));
@@ -354,20 +362,23 @@ int llwrite(int fd, char *buffer, int len){
   frame_to_send[1] = A;
   frame_to_send[2] = C1;
   frame_to_send[3] = C1^A; // BCC1
+	frame_to_send[8] = BCC2;
   frame_to_send[9] = FLAG;
 
   memmove(frame_to_send+4, new_frame, strlen(new_frame));
 
+/*
 	BCC2 = frame_to_send[2];
-	for(meme = 3; meme < strlen(frame_to_send) - 1; meme++){
-		BCC2 ^= frame_to_send[meme];
+	for( = 3;  < strlen(frame_to_send) - 1; ++){
+		BCC2 ^= frame_to_send[];
 	}
 
 	frame_to_send[8] = BCC2;
+*/
 
   printf("\nI-Frame to be sent to llread: %lu\n", strlen(frame_to_send));
-  for(meme = 0; meme < 10; meme++){
-    printf("Frame[%d]: %02x\n",meme, frame_to_send[meme]);
+  for( h=0; h < 10; h++){
+    printf("Frame[%d]: %02x\n",h, frame_to_send[h]);
   }
 
 	//send i_frame to llread
@@ -386,7 +397,9 @@ int llread(int fd, char *buffer){
 	state = START;
 	STOP = FALSE;
 
+	char *buff = malloc(3000);
 	unsigned char byte;
+	unsigned int size = 0;
 	// = calculateBCC2(buffer, sizeof(buffer));
 
 	while(!STOP){
@@ -409,6 +422,8 @@ int llread(int fd, char *buffer){
 	      case START:
 	      if(byte == FLAG){
 	        state = FLAG_RCV;
+					buff[size] = byte;
+					size++;
 	        printf("First FLAG processed successfully: %02x\n", byte);
 	      }
 	      else { state = START; printf("START if 1\n"); }
@@ -417,6 +432,8 @@ int llread(int fd, char *buffer){
 	      case FLAG_RCV:
 	      if(byte == A) {
 	        state = A_RCV;
+					buff[size] = byte;
+					size++;
 	        printf("A processed successfully: %02x\n", byte);
 	      }
 	      else if(byte == FLAG){ state = FLAG_RCV; printf("FLAG_RCV if 1\n"); }
@@ -426,6 +443,8 @@ int llread(int fd, char *buffer){
 	      case A_RCV:
 	      if(byte == C1) {
 	        state = C1_RCV;
+					buff[size] = byte;
+					size++;
 	        printf("C1 processed successfully: %02x\n", byte);
 	      }
 	      else if(byte == FLAG){ state = FLAG_RCV; printf("A_RCV if 1\n"); }
@@ -436,6 +455,8 @@ int llread(int fd, char *buffer){
 	      printf("Processing C1_RCV\n");
 	      if(byte == (C1^A)){ //C^A
 	        state = BCC1_OK;
+					buff[size] = byte;
+					size++;
 	        printf("BCC1 processed successfully: %02x\n", byte);
 	      }
 	      else if(byte == FLAG){ state = FLAG_RCV; printf("\nC1_RCV if 1\n"); }
@@ -446,25 +467,35 @@ int llread(int fd, char *buffer){
 				printf("Processing BCC1_OK\n");
 	      if(byte == FLAG){
 	        state = END;
+					buff[size] = byte;
+					size++;
 	        printf("BCC1_OK processing failure: %02x\n", byte);
 	      }
 	      else { state = DATA_PROCESSING; printf("Starting to proccess Data from I Frame...\n"); }
 	      break;
 
 				case DATA_PROCESSING:
+/*
 				if(byte == BCC2){
 					state = BCC2_OK;
+*/
+				if(byte == FLAG){
+					state = END;
+					buff[size] = byte;
+					size++;
 					printf("Finished processing Data: %02x\n", byte);
 				}
 				else {
 					state = DATA_PROCESSING;
-					printf("We aiming 4 dat %02x BCC2 boyyyyeee\n", BCC2);
+					//printf("We aiming 4 dat %02x BCC2 boyyyyeee\n", BCC2);
 					printf("Processing data...\n"); }
 				break;
 
 				case BCC2_OK:
 				if(byte == FLAG){
 					state = END;
+					buff[size] = byte;
+					size++;
 					printf("BCC2 processed successfully: %02x\n", byte);
 				}
 				else{ state = START; printf("Failed BCC2 processing: %02x\n", byte); }
@@ -476,6 +507,19 @@ int llread(int fd, char *buffer){
 	      break;
 			}
 		}
+
+	int k;
+	printf("Buff(size = %d) values pre-destuffing:\n", size);
+	for(k=0; k < strlen(buff); k++){
+		printf("buff[%d]: %02x\n", k, buff[k]);
+	}
+
+	unsigned int newsize = deStuffing(buff, strlen(buff));
+
+	printf("\nBuff(newsize = %d) values post-destuffing:\n", newsize);
+	for(k=0; k < strlen(buff); k++){
+		printf("buff[%d]: %02x\n", k, buff[k]);
+	}
 
   return 0;
 }
@@ -568,7 +612,6 @@ int deStuffing(char * package, int length){
       size--;
     }
   }
-
   return size; //return the new size of the package
 }
 

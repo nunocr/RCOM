@@ -19,12 +19,12 @@ unsigned char calculateBCC2(unsigned char* buffer, unsigned int size);
 #define BAUDRATE B38400
 #define _POSIX_SOURCE 1 /* POSIX compliant source */
 #define FALSE 0
-#define TRUE 1
+#define TRUE  1
 
 #define TRANSMITTER 0
-#define RECEIVER 1
+#define RECEIVER    1
 
-#define RETRY_NUM 4
+#define RETRY_NUM   4
 
 #define FLAG  0x7e
 #define A     0x03
@@ -47,11 +47,11 @@ unsigned char calculateBCC2(unsigned char* buffer, unsigned int size);
 #define C1_RCV           8
 #define BCC1_OK          9
 #define BCC2_OK          10
-#define DATA_PROCESSING 11
+#define DATA_PROCESSING  11
 
 /* I frame */
-#define ESC 	  0x7D
-#define SUB 	  0x20
+#define ESC 	    0x7D
+#define SUB 	    0x20
 #define XOR_7E_20 0x5E
 #define XOR_7D_20 0x5D
 
