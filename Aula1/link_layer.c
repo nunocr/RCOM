@@ -18,8 +18,8 @@ unsigned char C1 = 0x40;
 //unsigned char BCC2 = 0x00;
 
 void switchC1(){
-	if (C1 == 0x00) C1 = 0x40;
-	else            C1 = 0x00;
+	if (C1 == 0x00) C1 = 0x40; //Ns1
+	else            C1 = 0x00; //Ns0
 }
 
 volatile int STOP = FALSE;
@@ -97,9 +97,7 @@ if ( tcsetattr(fd,TCSANOW,&newtio) == -1) {
   exit(-1);
 }
 
-
 //TRANSMITTER
-
 
 if(mode == TRANSMITTER){
 
@@ -108,14 +106,6 @@ if(mode == TRANSMITTER){
   state = START;
 
   printf("Sending SET message...\n");
-
-  /*
-  set_message[0] = FLAG;
-  set_message[1] = A;
-  set_message[2] = C_SET;
-  set_message[3] = set_message[1] ^ set_message[2];
-  set_message[4] = FLAG;
-  */
 
   res = write(fd, set_message, sizeof(set_message));
   printf("llopen:write: %d bytes written\n", res);
@@ -187,8 +177,6 @@ if(mode == TRANSMITTER){
 
   }
 }
-
-
 
 //RECEIVER
 
@@ -279,13 +267,6 @@ else{
   ua_message[3] = UA ^ A;
   ua_message[4] = FLAG;
 
-  /*
-  if(write(fd, ua_message, sizeof(ua_message)) == 0){
-  printf("ERROR:llopen: failed to send UA message.\n");
-  exit(-1);
-}
-*/
-
 int k;
 for(k=0; k < 5; k++){
   printf("UA[%d]: %02x\n", k, ua_message[k]);
@@ -300,45 +281,19 @@ printf("Serial port: %d", fd);
 }
 
 return fd;
-
-/*
-printf("New termios structure set\n");
-
-//Send
-int i;
-printf("\nMessage to send:\n");
-for(i=0; i < 5; i++){
-printf("SET[%d] = %x\n", i, set_message[i]);
-}
-
-res = write(fd, buf, strlen(buf) + 1);
-printf("\n%d bytes written\n", res);
-
-if ( tcsetattr(fd,TCSANOW,&oldtio) == -1) {
-perror("tcsetattr");
-exit(-1);
-}
-
-close(fd);
-return 0;
-
-*/
 }
 
 int llwrite(int fd, char *buffer, int len){
 
   char* i_frame = malloc(3);
+	int h;
 
   i_frame[0] = 0x77; //D
   i_frame[1] = 0x7d; //DATA
   i_frame[2] = 0x55; //Dn
 
+	unsigned char BCC2 = calculateBCC2(i_frame, strlen(i_frame));
 
-	unsigned char BCC2 = 0;
-	int h;
-	for(h=0; h < strlen(i_frame); h++){
-		BCC2 ^= i_frame[h];
-	}
 	printf("\n\nBCC2: %02x\n\n", BCC2);
 
   printf("\nI-Frame pre-stuffing: %lu\n", strlen(i_frame));
@@ -355,7 +310,6 @@ int llwrite(int fd, char *buffer, int len){
   }
 
   char* frame_to_send = malloc(6 + strlen(new_frame));
-	//BCC2 = new_frame[0] ^ new_frame[1] ^ new_frame[2];
 
   frame_to_send[0] = FLAG;
   frame_to_send[1] = A;
@@ -365,15 +319,6 @@ int llwrite(int fd, char *buffer, int len){
   frame_to_send[9] = FLAG;
 
   memmove(frame_to_send+4, new_frame, strlen(new_frame));
-
-/*
-	BCC2 = frame_to_send[2];
-	for( = 3;  < strlen(frame_to_send) - 1; ++){
-		BCC2 ^= frame_to_send[];
-	}
-
-	frame_to_send[8] = BCC2;
-*/
 
   printf("\nI-Frame to be sent to llread: %lu\n", strlen(frame_to_send));
   for( h=0; h < 10; h++){
@@ -385,6 +330,14 @@ int llwrite(int fd, char *buffer, int len){
 	  int ret = write(fd, frame_to_send, strlen(frame_to_send));
 	  printf("llwrite:write: %d bytes written\n", ret);
 
+ //wait for RR confirmation response
+	unsigned char byte;
+
+	 if(read(fd, &byte, sizeof(byte)) == 0){
+		 printf("Nothing read from llread.\n");
+	 }
+
+	printf("RR received: %02x\n", byte);
   return 0;
 }
 
@@ -397,19 +350,15 @@ int llread(int fd, char *buffer){
 	STOP = FALSE;
 
 	char *buff = malloc(3000);
+	char *data = malloc(3000);
 	unsigned char byte;
 	unsigned int size = 0;
-	// = calculateBCC2(buffer, sizeof(buffer));
+	unsigned int data_size = 0;
 
 	while(!STOP){
 
     if(state != END){
-/*
-		  int test;
-		  test = read(fd, &buffer, sizeof(buffer));
-			printf("\n\nLLREAD: READ RESULT: %d\n\n", test);
-			}
-*/
+
 			if(read(fd, &byte, sizeof(byte)) == 0){
 				printf("Error: Nothing read from llread.\n");
 				exit(-1);
@@ -478,8 +427,10 @@ int llread(int fd, char *buffer){
 	      else {
 					state = DATA_PROCESSING;
 					buff[size] = byte;
+					data[data_size] = byte;
 					printf("[%d]th element of buff: %02x\n", size, buff[size]);
 					size++;
+					data_size++;
 				  printf("Starting to proccess Data from I Frame...\n");
 				}
 	      break;
@@ -495,8 +446,10 @@ int llread(int fd, char *buffer){
 				else {
 					state = DATA_PROCESSING;
 					buff[size] = byte;
+					data[data_size] = byte;
 					printf("[%d]th element of buff: %02x\n", size, buff[size]);
 					size++;
+					data_size++;
 					//printf("Expected BCC2: %02x\n", BCC2);
 					printf("Processing data...\n");
 				}
@@ -527,15 +480,32 @@ int llread(int fd, char *buffer){
 	}
 
 	unsigned int newsize = deStuffing(buff, strlen(buff));
+	unsigned int newdatasize = deStuffing(data, strlen(data)) - 1;
 
 	printf("\nBuff(newsize = %d) values post-destuffing:\n", newsize);
-	for(k=0; k < strlen(buff); k++){
+	for(k=0; k < newsize; k++){
 		printf("buff[%d]: %02x\n", k, buff[k]);
 	}
 
-//Send RR confirmation packet
+//Send RR confirmation packet if BCC2 is correct
 
+unsigned char data_BCC2 = calculateBCC2(data, newdatasize);
 
+printf("data:\n");
+int foo;
+for(foo = 0; foo < newdatasize; foo++){
+	printf("data[%d]: %02x\n", foo, data[foo]);
+}
+
+printf("data_BCC2: %02x\n", data_BCC2);
+
+if(data_BCC2 == buff[strlen(buff) - 2]){
+	if(C1 == 0x00)
+		switchC1();
+
+	int ret = write(fd, &C1, 1);
+  printf("llread:C1: %d bytes written\n", ret);
+}
 
   return 0;
 }
@@ -631,7 +601,7 @@ int deStuffing(char * package, int length){
   return size; //return the new size of the package
 }
 
-unsigned char calculateBCC2(unsigned char* buffer, unsigned int size) {
+unsigned char calculateBCC2(char* buffer, unsigned int size) {
 	unsigned char BCC2 = 0;
 
 	int i = 0;

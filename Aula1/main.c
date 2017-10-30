@@ -39,9 +39,12 @@ else if(strcmp(argv[2], "RECEIVER") == 0) {
 
 	r_fd = llopen((*argv[1])-'0', 1);
 	printf("\nmain.c: Receiver: descriptor after llopen: %d\n", r_fd);
+	/*
 	if(llread(r_fd, r_buf) == 0){
 		printf("\nError: main.c: Receiver: Nothing to read from llread.\n");
 	}
+	*/
+	llread(r_fd, r_buf);
 	printf("\nmain.c: Receiver: descriptor after llread: %d\n", r_fd);
 	free(r_buf);
 
