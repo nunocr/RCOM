@@ -11,7 +11,7 @@ int transmitter(char * fileName, int fd) //envio da trama com SET
   FILE * file = NULL;
   //openfile
   int fileSize = 0;
-  DEBUG_FLAG = open_file(file, fileName);
+  DEBUG_FLAG = open_file(&file, fileName);
   if(DEBUG_FLAG != 0)
     return -1;
 
@@ -41,17 +41,50 @@ int transmitter(char * fileName, int fd) //envio da trama com SET
   //depois avançar
   //enviar mensagem com o START_PACK (2) END_PACK(3) DATA_PACK(1) TODO::fazer defines disto
   char * packStart = malloc(1);
-  create_start_package(1, fileName, fileSize, packStart);
+  create_start_package(START_PACK, fileName, fileSize, packStart);
   llwrite(fd, packStart, sizeof(*packStart));      //int fd, char *buffer, int len);
   free(packStart);
 
   return 0;
 }
 
-int open_file(FILE * file, char * fileName)
+int receiver(int fd){
+  //RECEIVER
+
+  //receive START signal
+  char *start = malloc(1);
+  int startSize = llread(0, start);
+  int fileSize;
+  char *name = malloc(1);
+  if( getFileInfo(start, startSize, &fileSize, name) == -1)
+  {
+    printf("Error reading start package\n");
+    exit(1);
+  }
+
+  FILE *file = NULL;
+  if(create_file(&file, name) != 0)
+    printf("opened file\n");
+
+free(name);
+}
+
+int open_file(FILE ** file, char * fileName)
 {
-  file = fopen(fileName, "r+");
-  if(file == NULL )
+  *file = fopen(fileName, "r+");
+  if(*file == NULL )
+  {
+    printf("File does not exist");
+    return -1;
+  }
+
+  return 0;
+}
+
+int create_file(FILE ** file, char * fileName)
+{
+  *file = fopen(fileName, "w+");
+  if(*file == NULL )
   {
     printf("File does not exist");
     return -1;
@@ -81,7 +114,7 @@ int create_start_package(int mode, char * fileName, int size, char * package)
   int numBytesSize = check_num_bytes(size);
   int nameSize = strlen(fileName);
   package[0] = mode;
-  package[1] = 0; //TODO::TSIZE = 0,tamanho ficheiro, TNAME = 1, tamanho do nome
+  package[1] = TSIZE; //TSIZE = 0,tamanho do ficheiro, TNAME = 1, tamanho do nome
   package[2] = (char) numBytesSize ; //dividir o size
   int i;
   for(i=3; i<=numBytesSize;i++)
@@ -112,4 +145,29 @@ int check_num_bytes(int size)
     count++;
   }
   return count;
+}
+
+int getFileInfo(char* buffer, int buffsize, int *size, char *name)
+{
+  int fileSize = 0;
+  int i=0; //START
+  if(buffer[i] != START_PACK && buffer[i] != END_PACK)
+    return -1;
+  i++; //TSIZE
+  if(buffer[i] != TSIZE)
+    return -1;
+  i++; //numBytesSize
+  int sizeLength = (int) buffer[i];
+  i++; //Numero de Bytes do ficheiro
+  int j;
+  for(j=0; j< sizeLength; j++, i++)
+  {
+    int k;
+    unsigned char ch = (unsigned char) buffer[i];
+    unsigned int curr = (unsigned int) ch;
+    for(k = 0; k < j; k++)
+        curr = curr << 8;
+    fileSize += curr;
+  }
+
 }

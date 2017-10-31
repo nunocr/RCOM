@@ -28,12 +28,12 @@ if(strcmp(argv[2], "TRANSMITTER") == 0){
 	t_fd = llopen((*argv[1])-'0', 0);
 	printf("\nmain.c: Transmitter: descriptor after llopen: %d\n", t_fd);
 
-      transmitter(argv[3], t_fd); //nome do ficheiro
+  transmitter(argv[3], t_fd); //nome do ficheiro
 
 
       //receiver();
 
-  llclose(mode);
+  llclose(0);
 /*
 	llwrite(t_fd, t_buf, sizeof(t_buf));
   printf("\nmain.c: Transmitter: descriptor after llwrite: %d\n", t_fd);
@@ -46,7 +46,9 @@ else if(strcmp(argv[2], "RECEIVER") == 0) {
 	int r_fd;
 	char *r_buf = malloc(sizeof(*r_buf));
 
+
 	r_fd = llopen((*argv[1])-'0', 1);
+	receiver(r_fd);
 	printf("\nmain.c: Receiver: descriptor after llopen: %d\n", r_fd);
 	/*
 	if(llread(r_fd, r_buf) == 0){
