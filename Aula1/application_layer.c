@@ -40,9 +40,9 @@ int transmitter(char * fileName, int fd) //envio da trama com SET
   //receiver envia mensagem! TODO::colocar o receiver a enviar um pacote
   //depois avançar
   //enviar mensagem com o START_PACK (2) END_PACK(3) DATA_PACK(1) TODO::fazer defines disto
-  char * packStart = malloc(1);
-  create_start_package(START_PACK, fileName, fileSize, packStart);
-  llwrite(fd, packStart, sizeof(*packStart));      //int fd, char *buffer, int len);
+  char * packStart = malloc(1024);
+  int packageSize = create_start_package(START_PACK, fileName, fileSize, packStart);
+  llwrite(fd, packStart, packageSize);      //int fd, char *buffer, int len);
   free(packStart);
 
   return 0;
@@ -52,10 +52,10 @@ int receiver(int fd){
   //RECEIVER
 
   //receive START signal
-  char *start = malloc(1);
+  char *start = malloc(1024);
   int startSize = llread(0, start);
   int fileSize;
-  char *name = malloc(1);
+  char *name = malloc(1024);
   if( getFileInfo(start, startSize, &fileSize, name) == -1)
   {
     printf("Error reading start package\n");
@@ -133,7 +133,7 @@ int create_start_package(int mode, char * fileName, int size, char * package)
     package[i] = fileName[j];
   }
 
-  return 0;
+  return i;
 }
 
 int check_num_bytes(int size)
@@ -169,5 +169,19 @@ int getFileInfo(char* buffer, int buffsize, int *size, char *name)
         curr = curr << 8;
     fileSize += curr;
   }
+  *size = fileSize;
 
+  i++; //TNAME
+  if(buffer[i] != TNAME)
+    return -1;
+  i++; //NAME size
+  int nameLenght = buffer[i];
+  i++; //NAME data
+  name = realloc(name, nameLength);
+  for(j=0; j<nameLength; j++, i++)
+  {
+    name[j] = buffer[i];
+  }
+  name[j] = '\0';
+  return 0;
 }
