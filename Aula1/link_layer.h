@@ -52,6 +52,9 @@ unsigned char calculateBCC2(char* buffer, unsigned int size);
 #define SUB 	    0x20
 #define XOR_7E_20 0x5E
 #define XOR_7D_20 0x5D
-
+/*
+#define RR        0x05
+#define REJ       0x01
+*/
 
 #endif

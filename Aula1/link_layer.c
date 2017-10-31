@@ -15,7 +15,8 @@
 
 
 unsigned char C1 = 0x40;
-//unsigned char BCC2 = 0x00;
+unsigned char RR = 0x05;
+unsigned char REJ = 0x01;
 
 void switchC1(){
 	if (C1 == 0x00) C1 = 0x40; //Ns1
@@ -174,7 +175,6 @@ if(mode == TRANSMITTER){
       printf("You shouldnt be here. Leave.\n");
       break;
     }
-
   }
 }
 
@@ -490,6 +490,7 @@ int llread(int fd, char *buffer){
 //Send RR confirmation packet if BCC2 is correct
 
 unsigned char data_BCC2 = calculateBCC2(data, newdatasize);
+//unsigned char data_BCC2 = 0xff;
 
 printf("data:\n");
 int foo;
@@ -502,11 +503,15 @@ printf("data_BCC2: %02x\n", data_BCC2);
 if(data_BCC2 == buff[strlen(buff) - 2]){
 	if(C1 == 0x00)
 		switchC1();
-
-	int ret = write(fd, &C1, 1);
-  printf("llread:C1: %d bytes written\n", ret);
+	printf("BCC2 processed successfully.\n");
+	int ret = write(fd, &RR, 1);
+  printf("llread:RR: %d bytes written\n", ret);
 }
-
+else{
+	printf("Error in BCC2, sending REJ message.\n");
+	int ret = write(fd, &REJ, 1);
+	printf("llread:REJ: %d bytes written\n", ret);
+}
   return 0;
 }
 
@@ -516,7 +521,6 @@ int llclose(int fd){
 }
 
 char* stuffing(char * package, int length){
-
 
   int i, new_length = length;
   for(i = 0; i < length; i++){
