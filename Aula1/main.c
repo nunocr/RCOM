@@ -12,6 +12,7 @@
 #include <string.h>
 
 #include "link_layer.h"
+#include "application_layer.h"
 
 int main(int argc, char** argv) {
 	if (argc != 3) {
@@ -26,9 +27,17 @@ if(strcmp(argv[2], "TRANSMITTER") == 0){
 
 	t_fd = llopen((*argv[1])-'0', 0);
 	printf("\nmain.c: Transmitter: descriptor after llopen: %d\n", t_fd);
+
+      transmitter(argv[3], t_fd); //nome do ficheiro
+
+
+      //receiver();
+
+  llclose(mode);
+/*
 	llwrite(t_fd, t_buf, sizeof(t_buf));
   printf("\nmain.c: Transmitter: descriptor after llwrite: %d\n", t_fd);
-	free(t_buf);
+	free(t_buf);*/
 
 }
 

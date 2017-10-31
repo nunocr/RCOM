@@ -7,8 +7,7 @@
 #define TO_READ "r"
 #define TO_WRITE "w"
 
-int mainn(int argc, char** argv);
-int transmitter(char * fileName);
+int transmitter(char * fileName, int fd);
 int open_file(FILE * file, char * fileName);
 int file_size(FILE * file, int * fileSize);
 int create_start_package(int mode, char * fileName, int size, char * package);

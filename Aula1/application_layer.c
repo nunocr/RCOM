@@ -6,43 +6,7 @@
 //static int TRAMA_SIZE = 0;
 static int DEBUG_FLAG = 0;
 
-int mainn(int argc, char** argv)
-{
-  int mode = 3;
-  if( argc == 3 && (strcmp("RECEIVER",argv[2]) == 0))
-      mode = 0;
-  else if( argc == 4  && (strcmp("TRANSMITTER",argv[2]) == 0))
-      mode = 1;
-  else {
-      printf("Wrong number of arguments \n");
-      printf("Usage:\tnserial SerialPort\n\tex: nserial /dev/ttyS0  RECEIVER\n");
-      printf("      \tex: nserial /dev/ttyS0  TRANSMITTER  FilePath \n");
-      exit(1);
-  }
-
-  if ((strcmp("/dev/ttyS0", argv[1])!=0) &&  (strcmp("/dev/ttyS1", argv[1])!=0) )
-  {
-      printf("Wrong seraial port: choose /dev/ttyS0 or /dev/ttyS1 \n");
-      exit(1);
-  }
-
-  if(llopen((*argv[1])-'0', mode) != 0)
-  {
-    exit(1);
-  }
-
-  if(mode == TRANSMITTER)
-        transmitter(argv[3]); //nome do ficheiro
-    else if (mode == RECEIVER)
-        exit(1);
-        //receiver();
-
-    llclose(mode);
-    //mandar as estatisticas da transmissao
-return 0;
-}
-
-int transmitter(char * fileName) //envio da trama com SET
+int transmitter(char * fileName, int fd) //envio da trama com SET
 {
   FILE * file = NULL;
   //openfile
@@ -78,6 +42,8 @@ int transmitter(char * fileName) //envio da trama com SET
   //enviar mensagem com o START_PACK (2) END_PACK(3) DATA_PACK(1) TODO::fazer defines disto
   char * packStart = malloc(1);
   create_start_package(1, fileName, fileSize, packStart);
+  llwrite(fd, packStart, sizeof(*packStart));      //int fd, char *buffer, int len);
+  free(packStart);
 
   return 0;
 }
@@ -113,24 +79,36 @@ int create_start_package(int mode, char * fileName, int size, char * package)
 {
   //size = 10968
   int numBytesSize = check_num_bytes(size);
+  int nameSize = strlen(fileName);
   package[0] = mode;
   package[1] = 0; //TODO::TSIZE = 0,tamanho ficheiro, TNAME = 1, tamanho do nome
-  package[2] = numBytesSize ; //dividir o size
+  package[2] = (char) numBytesSize ; //dividir o size
   int i;
-  for(i=3; i<numBytesSize;i++)
+  for(i=3; i<=numBytesSize;i++)
   {
     package[i] = (unsigned char) size;
     size >>= 8;
   }
+  i++;
+  package[i] = 1; //TNAME
+  i++;
+  package[i] = (char) nameSize;
+
+  int j;
+  for(j=0; j<nameSize; i++, j++)
+  {
+    package[i] = fileName[j];
+  }
+
   return 0;
 }
 
 int check_num_bytes(int size)
 {
   int count = 0;
-  while(size > 2)
+  while(size != 0)
   {
-    size = size / 2;
+    size >>= 8;
     count++;
   }
   return count;
