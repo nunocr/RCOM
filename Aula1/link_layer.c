@@ -738,7 +738,14 @@ int llclose(int fd, int flag){
 	}
 	}
 
-
+	struct termios oldtio,newtio;
+	sleep(2);
+	if ( tcsetattr(fd,TCSANOW,&oldtio) == -1) {
+		perror("tcsetattr");
+		return 1;
+	}
+	close(fd);
+	
   return 0;
 }
 

@@ -27,11 +27,8 @@ if(strcmp(argv[2], "TRANSMITTER") == 0){
 
 	t_fd = llopen((*argv[1])-'0', 0);
 	printf("\nmain.c: Transmitter: descriptor after llopen: %d\n", t_fd);
-	printf("cenas1\n");
   transmitter(argv[3], t_fd); //nome do ficheiro
-	printf("cenas2\n");
   llclose(t_fd, 0); //0 significa o transmitter
-	printf("cenas3\n");
 
 }
 
