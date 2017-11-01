@@ -6,7 +6,7 @@ typedef enum {TRANSMITTER, RECEIVER} UserMode;
 int llopen(int port, char mode);
 int llwrite(int fd, char *buffer, int len);
 int llread(int fd, char *buffer);
-int llclose(int fd);
+int llclose(int fd, int flag);
 
 /* Utilities */
 int stuffing(char * package, int length);
@@ -27,6 +27,7 @@ void switchC1();
 #define FLAG  0x7e
 #define A     0x03
 #define C_SET 0x03
+#define C_DISC 0x09
 #define UA 	  0x07
 
 /* SET State Machine */

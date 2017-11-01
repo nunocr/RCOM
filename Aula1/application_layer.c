@@ -39,7 +39,7 @@ int transmitter(char * fileName, int fd) //envio da trama com SET
   //depois avançar
   //enviar mensagem com o START_PACK (2) END_PACK(3)
   char * packStart = malloc(1024);
-  int packageSize = create_start_package(START_PACK, fileName, size, packStart);
+  int packageSize = create_start_end_package(START_PACK, fileName, size, packStart);
   llwrite(fd, packStart, packageSize);      //int fd, char *buffer, int len);
   free(packStart);
 
@@ -69,6 +69,26 @@ int transmitter(char * fileName, int fd) //envio da trama com SET
   }
   printf("ENVIADO TUDO");
   free(data);
+
+
+  //FINALIZAR
+  char * end = malloc(1024);
+  packageSize = create_start_end_package(END_PACK, fileName, size, end);
+
+  if(llwrite(fd, end, packageSize) != 0)
+  {
+    printf("Unable to send END PACKAGE\n" );
+    free(end);
+    exit(1);
+  }
+  free(end);
+
+  //ENVIAR O DISC E FECHAR
+  if(file != NULL)
+  fclose(file);
+  else{
+      printf("File NULL\n");
+  }
 
   return 0;
 }
@@ -109,11 +129,23 @@ int receiver(int fd){
       bytesRead += size;
     }
   }
-  printf("Almost\n");
   free(buffer);
-  if(bytesRead != fileSize)
+  if(bytesRead != 10968)
     printf("Wrong Number Bytes\n");
   printf("Enviado Direito\n");
+
+  //Finalizar
+  char *end = malloc(1024);
+  int endSize = llread(fd, end);
+  name = malloc(1);
+  if(get_file_info(end, endSize, &fileSize, name) == -1)
+  {
+	   printf("Error reading end package\n");
+     exit(1);
+  }
+  printf("\nEnd Read name: %s - size: %d \n", name, fileSize);
+  free(name);
+
 return 0;
 }
 
@@ -158,7 +190,7 @@ unsigned long file_size(FILE * file,  int * fileSize)
   return size;
 }
 
-int create_start_package(int type, char * fileName,  int size, char * package)
+int create_start_end_package(int type, char * fileName,  int size, char * package)
 {
   //size = 10968
   int nameLength = strlen(fileName);

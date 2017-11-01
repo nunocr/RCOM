@@ -487,72 +487,290 @@ else{
 }
 
 
-int llclose(int fd){
+int llclose(int fd, int flag){
+	unsigned char byte;
+	int res;
+	unsigned char set_message[5] = {FLAG, A, C_DISC, A^C_DISC, FLAG};
+	if(flag == 0) //transmitter
+	{
+		//enviar disc_pack
+		char* DISC = malloc(5*sizeof(char));
+		DISC[0] = FLAG;
+		DISC[1] = A;
+		DISC[2] = C_DISC;
+		DISC[3] = A ^ C_DISC;
+		DISC[4] = FLAG;
+
+		write(fd, DISC, 5);
+
+		state = START;
+	  STOP = FALSE;
+
+		//receber o DISK do receiver
+	  while(!STOP){char* DISC = malloc(5*sizeof(char));
+		DISC[0] = FLAG;
+		DISC[1] = A;
+		DISC[2] = C_DISC;
+		DISC[3] = A ^ C_DISC;
+		DISC[4] = FLAG;
+
+		write(fd, DISC, 5);
+	    if(state != END){
+	      res = read(fd, &byte, sizeof(byte));
+	      printf("Current byte being proccessed: %02x\n", byte);
+	      printf("DISC RECEIVE FD: %d\n", res);
+	    }
+
+	    switch(state){
+
+	      case START:
+	      if(byte == FLAG){
+	        state = FLAG_RCV;
+	        printf("First FLAG processed successfully: %02x\n", byte);
+	      }
+	      else { state = START; printf("START if 1\n"); }
+	      break;
+
+	      case FLAG_RCV:
+	      if(byte == A) {
+	        state = A_RCV;
+	        printf("A processed successfully: %02x\n", byte);
+	      }
+	      else if(byte == FLAG){ state = FLAG_RCV; printf("FLAG_RCV if 1\n"); }
+	      else{ state = START; printf("FLAG_RCV if 2\n"); }
+	      break;
+
+	      case A_RCV:
+	      if(byte == C_DISC) {
+	        state = C_RCV;
+	        printf("C_DISC processed successfully: %02x\n", byte);
+	      }
+	      else if(byte == FLAG){ state = FLAG_RCV; printf("A_RCV if 1\n"); }
+	      else{ state = START; printf("A_RCV if 2\n"); }
+	      break;
+
+	      case C_RCV:
+	      printf("\nProcessing C_RCV\n");
+	      printf("set_message[1]: %02x | set_message[2]: %02x\n", set_message[1], set_message[2]);
+	      printf("Byte: %02x | SET: %02x\n", byte, set_message[3]);
+	      if(byte == (set_message[1] ^ set_message[2])){
+	        state = BCC_OK;
+	        printf("BCC processed successfully: %02x\n", byte);
+	      }
+	      else if(byte == FLAG){ state = FLAG_RCV; printf("\nC_RCV if 1\n"); }
+	      else { state = START; printf("\nC_RCV if 2\n"); }
+	      break;
+
+	      case BCC_OK:
+	      if(byte == FLAG){
+	        state = END;
+	        printf("Last FLAG processed successfully: %02x\n", byte);
+	      }
+	      else { state = START; printf("BCC_OK if 1\n"); }
+	      break;
+
+	      case END:
+	      printf("Reached end of State Machine\n");
+	      STOP = TRUE;
+	      break;
+
+	      default:
+	      printf("You shouldnt be here. go away.\n");
+	      break;
+	    }
+		}
+		//enviar UA
+		unsigned char ua_message[5];
+	  ua_message[0] = FLAG;
+	  ua_message[1] = A;
+	  ua_message[2] = UA;
+	  ua_message[3] = UA ^ A;
+	  ua_message[4] = FLAG;
+
+		int k;
+		for(k=0; k < 5; k++){
+		  printf("UA[%d]: %02x\n", k, ua_message[k]);
+		}
+		int wfd;
+		wfd = write(fd, ua_message, 5);
+	}else { //receiver
+		//receber o disc
+		while(!STOP){
+	    if(state != END){
+	      res = read(fd, &byte, sizeof(byte));
+	      printf("Current byte being proccessed: %02x\n", byte);
+	      printf("DISC RECEIVE FD: %d\n", res);
+	    }
+
+	    switch(state){
+
+	      case START:
+	      if(byte == FLAG){
+	        state = FLAG_RCV;
+	        printf("First FLAG processed successfully: %02x\n", byte);
+	      }
+	      else { state = START; printf("START if 1\n"); }
+	      break;
+
+	      case FLAG_RCV:
+	      if(byte == A) {
+	        state = A_RCV;
+	        printf("A processed successfully: %02x\n", byte);
+	      }
+	      else if(byte == FLAG){ state = FLAG_RCV; printf("FLAG_RCV if 1\n"); }
+	      else{ state = START; printf("FLAG_RCV if 2\n"); }
+	      break;
+
+	      case A_RCV:
+	      if(byte == C_DISC) {
+	        state = C_RCV;
+	        printf("C_DISC processed successfully: %02x\n", byte);
+	      }
+	      else if(byte == FLAG){ state = FLAG_RCV; printf("A_RCV if 1\n"); }
+	      else{ state = START; printf("A_RCV if 2\n"); }
+	      break;
+
+	      case C_RCV:
+	      printf("\nProcessing C_RCV\n");
+	      printf("set_message[1]: %02x | set_message[2]: %02x\n", set_message[1], set_message[2]);
+	      printf("Byte: %02x | SET: %02x\n", byte, set_message[3]);
+	      if(byte == (set_message[1] ^ set_message[2])){
+	        state = BCC_OK;
+	        printf("BCC processed successfully: %02x\n", byte);
+	      }
+	      else if(byte == FLAG){ state = FLAG_RCV; printf("\nC_RCV if 1\n"); }
+	      else { state = START; printf("\nC_RCV if 2\n"); }
+	      break;
+
+	      case BCC_OK:
+	      if(byte == FLAG){
+	        state = END;
+	        printf("Last FLAG processed successfully: %02x\n", byte);
+	      }
+	      else { state = START; printf("BCC_OK if 1\n"); }
+	      break;
+
+	      case END:
+	      printf("Reached end of State Machine\n");
+	      STOP = TRUE;
+	      break;
+
+	      default:
+	      printf("You shouldnt be here. go away.\n");
+	      break;
+	    }
+		}
+		//enviar disc
+		char* DISC = malloc(5*sizeof(char));
+		DISC[0] = FLAG;
+		DISC[1] = A;
+		DISC[2] = C_DISC;
+		DISC[3] = A ^ C_DISC;
+		DISC[4] = FLAG;
+
+		write(fd, DISC, 5);
+
+		//Receber UA
+		while(!connected){
+	 if(state != END){
+		 printf("fd: %d | byte: %02x | sizeofbyte: %lu\n", fd, byte, sizeof(byte));
+		 if(read(fd, &byte, sizeof(byte)) == 0){
+			 printf("Nothing read from UA.\n");
+		 }
+		 printf("Current byte being proccessed: %02x\n", byte);
+	 }
+
+		printf("Received State: %d\n", state);
+
+		switch(state){
+
+			case START:
+			if(byte == FLAG){
+				state = FLAG_RCV;
+				printf("UA First FLAG processed successfully: %02x\n", byte);
+			}
+			else { state = START; printf("UA START if 1\n"); }
+			break;
+
+			case FLAG_RCV:
+			if(byte == A){
+				state = A_RCV;
+				printf("UA A processed successfully: %02x\n", byte);
+			}
+			else if(byte == FLAG) state = FLAG_RCV;
+			else state = START;
+			break;
+
+			case A_RCV:
+			if(byte == UA){
+				state = UA_RCV;
+				printf("UA C_SET processed successfully: %02x\n", byte);
+			}
+			else if(byte == FLAG) state = FLAG_RCV;
+			else state = START;
+			break;
+
+			case UA_RCV:
+			if(byte == (A ^ UA)){
+				state = BCC_OK;
+				printf("UA UA_RCV processed successfully: %02x\n", byte);
+			}
+			else if(byte == FLAG) state = START;
+			else state = START;
+			break;
+
+			case BCC_OK:
+			if(byte == FLAG){
+				state = END;
+				printf("UA Last FLAG processed successfully: %02x\n", byte);
+			}
+			break;
+
+			case END:
+			printf("UA processed successfully.\n");
+			connected = TRUE;
+			break;
+
+			default:
+			printf("You shouldnt be here. Leave.\n");
+			break;
+		}
+	}
+	}
+
+
   return 0;
 }
-/*
-char* stuffing(char * package, int length){
 
-  int i, new_length = length;
-  for(i = 0; i < length; i++){
-    if(package[i] == FLAG || package[i] == ESC)
-      new_length++;
-  }
-
-  char* buf = malloc(new_length);
-  memcpy(buf,package,length);
-
-  for(i = 0; i < new_length; i++)
-  switch(buf[i]){
-    case FLAG:
-    memmove(
-      buf+i+2,
-      buf+i+1,
-      new_length - i
-    );
-    memcpy(buf+i++, &FLAG_SUB, sizeof(FLAG_SUB));
-    break;
-
-    case ESC:
-    memmove(
-      buf+i+2,
-      buf+i+1,
-      new_length - i
-    );
-    memcpy(buf+i++, &ESC_SUB, sizeof(ESC_SUB));
-    break;
-  }
-
-  return buf;
-  /**/
 int stuffing(char * package, int length)
 {
   int size = length;
   int i;
   for(i = 0; i < length;i++)
   {
-  char oct = package[i]; //oct means byte
-  if(oct == FLAG || oct == ESC){
-  size++;
-}
-}
-if(size == length) //same size no need to stuff
-return size;
+	  char oct = package[i]; //oct means byte
+	  if(oct == FLAG || oct == ESC){
+	  	size++;
+		}
+	}
+	if(size == length) //same size no need to stuff
+	return size;
 
-for(i = 0; i < size; i++)
-{
-char oct = package[i];
-if(oct == FLAG || oct == ESC)
-{
-memmove(package + i + 2, package + i+1, size - i); //moving everything to the front
-if (oct == FLAG) {
-package[i+1] = XOR_7E_20;
-package[i] = ESC ;
-}
-else package[i+1] = XOR_7D_20;
-}
-}
-return size; //return the new size of the package*/
+	for(i = 0; i < size; i++)
+	{
+		char oct = package[i];
+		if(oct == FLAG || oct == ESC)
+		{
+			memmove(package + i + 2, package + i+1, size - i); //moving everything to the front
+			if (oct == FLAG)
+			{
+				package[i+1] = XOR_7E_20;
+				package[i] = ESC ;
+			}
+		else package[i+1] = XOR_7D_20;
+		}
+	}
+	return size; //return the new size of the package*/
 }
 
 int deStuffing(char * package, int length){

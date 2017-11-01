@@ -27,17 +27,11 @@ if(strcmp(argv[2], "TRANSMITTER") == 0){
 
 	t_fd = llopen((*argv[1])-'0', 0);
 	printf("\nmain.c: Transmitter: descriptor after llopen: %d\n", t_fd);
-
+	printf("cenas1\n");
   transmitter(argv[3], t_fd); //nome do ficheiro
-
-
-      //receiver();
-
-  llclose(0);
-/*
-	llwrite(t_fd, t_buf, sizeof(t_buf));
-  printf("\nmain.c: Transmitter: descriptor after llwrite: %d\n", t_fd);
-	free(t_buf);*/
+	printf("cenas2\n");
+  llclose(t_fd, 0); //0 significa o transmitter
+	printf("cenas3\n");
 
 }
 
@@ -56,6 +50,7 @@ else if(strcmp(argv[2], "RECEIVER") == 0) {
 	}
 	*/
 	free(r_buf);
+	llclose(r_fd, 1); //1 é o RECEIVER
 
 }
 
@@ -63,8 +58,6 @@ else{
 	printf("\nERROR: Invalid argument provided: %s\n", argv[2]);
 	exit(-1);
 }
-
-//llopen((*argv[1])-'0', argv[2]);
 
 	return 0;
 }
