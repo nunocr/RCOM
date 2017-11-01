@@ -17,25 +17,8 @@ int transmitter(char * fileName, int fd) //envio da trama com SET
     return -1;
   unsigned long size = file_size(file, &fileSize);
 
-  //criar uma package com SET TODO::provavelmente colocar no llopen!!!
-  /*char* set = malloc(5 * sizeof(char));
-
-	set[0] = FLAG;
-	set[1] = A;
-	set[2] = C_SET;
-	set[3] = A ^ C_SET;
-  set[4] = FLAG;*/
-
-  //enviar o pacote para receber confirmação que pode começar a enviar os dados
-  /*int res  = 0;
-	while(res <= 0)
-  {
-		res=write(fd, message, length);
-  }
-
-  free(msg);*/
-
-  //receiver envia mensagem! TODO::colocar o receiver a enviar um pacote
+  //criar uma package com SET
+  //receiver envia mensagem!
   //depois avançar
   //enviar mensagem com o START_PACK (2) END_PACK(3)
   char * packStart = malloc(1024);
@@ -106,7 +89,7 @@ int receiver(int fd){
     printf("Error reading start package\n");
     exit(1);
   }
-
+  printf("FILEZISE: %x\n", fileSize);
   FILE *file = NULL;
 
   if(create_file(&file, name) != 0)
@@ -117,7 +100,7 @@ int receiver(int fd){
   //receber ficheiro e gravar
   int bytesRead = 0;
   char * buffer = malloc(1024);
-  while(bytesRead<10968)
+  while(bytesRead<fileSize)
   {
     int size;
     llread(fd, buffer);
@@ -130,7 +113,7 @@ int receiver(int fd){
     }
   }
   free(buffer);
-  if(bytesRead != 10968)
+  if(bytesRead != fileSize)
     printf("Wrong Number Bytes\n");
   printf("Enviado Direito\n");
 
@@ -258,8 +241,8 @@ int get_file_info(char* buffer, int buffsize,  int *size, char *name)
   for(j=0; j< sizeLength; j++, i++)
   {
     int k;
-     char ch = ( char) buffer[i];
-     int curr = ( int) ch;
+    unsigned char ch = (unsigned char) buffer[i];
+    unsigned int curr = (unsigned int) ch;
     for(k = 0; k < j; k++)
         curr = curr << 8;
     fileSize += curr;
