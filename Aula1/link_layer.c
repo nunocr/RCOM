@@ -318,7 +318,7 @@ printf("HUHEUHEUHEUHEU\n");
  //wait for RR confirmation response
 	unsigned char byte;
 
-	 if(read(fd, &byte, sizeof(byte)) == 0){
+	 if(read(fd, &byte, 1) <= 0){
 		 printf("Nothing read from llread.\n");
 		 return -1;
 	 }
