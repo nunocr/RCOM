@@ -13,22 +13,24 @@
 
 #include "link_layer.h"
 
-
 unsigned char C1 = 0x40;
 unsigned char RR = 0x05;
 unsigned char REJ = 0x01;
-
-void switchC1(){
-	if (C1 == 0x00) C1 = 0x40; //Ns1
-	else            C1 = 0x00; //Ns0
-}
 
 volatile int STOP = FALSE;
 
 const short FLAG_SUB = 0x5E7D;
 const short ESC_SUB = 0x5D7D;
 
+struct termios oldtio;
+
 unsigned int retry_counter, state, connected = FALSE;
+
+void switchC1(){
+	if (C1 == 0x00) C1 = 0x40; //Ns1
+	else            C1 = 0x00; //Ns0
+}
+
 
 int llopen(int port, char mode){
 
@@ -53,7 +55,7 @@ unsigned char set_message[5] = {FLAG, A, C_SET, A^C_SET, FLAG};
 unsigned char byte;
 
 int fd, res;
-struct termios oldtio,newtio;
+struct termios newtio;
 
 /*
 Open serial port dmevice for reading and writing and not as controlling tty
@@ -293,12 +295,12 @@ int llwrite(int fd, char *bufferer, int len){
   bufferer[2] = 0x55; //Dn
 */
 	unsigned char BCC2 = calculateBCC2(bufferer, len);
-
+printf("HUHEUHEUHEUHEU\n");
 
   int newSize = stuffing(bufferer, len);
 
   char* frame_to_send = malloc(6 + newSize);
-
+printf("HUHEUHEUHEUHEU\n");
   frame_to_send[0] = FLAG;
   frame_to_send[1] = A;
   frame_to_send[2] = C1;
@@ -307,7 +309,7 @@ int llwrite(int fd, char *bufferer, int len){
 	frame_to_send[4+newSize] = BCC2;
   frame_to_send[4+newSize+1] = FLAG;
 
-
+printf("HUHEUHEUHEUHEU\n");
 	//send bufferer to llread
 		sleep(1);
 	  int ret = write(fd, frame_to_send, 6+newSize);
@@ -318,7 +320,14 @@ int llwrite(int fd, char *bufferer, int len){
 
 	 if(read(fd, &byte, sizeof(byte)) == 0){
 		 printf("Nothing read from llread.\n");
+		 return -1;
 	 }
+	 printf("%x\n",byte );
+	 if(byte == REJ)
+	 {
+		 return 1;
+	 }
+
 
 	printf("RR received: %02x\n", byte);
   return 0;
@@ -738,14 +747,13 @@ int llclose(int fd, int flag){
 	}
 	}
 
-	struct termios oldtio,newtio;
-	sleep(2);
+	/*sleep(2);
 	if ( tcsetattr(fd,TCSANOW,&oldtio) == -1) {
 		perror("tcsetattr");
 		return 1;
 	}
-	close(fd);
-	
+	close(fd);*/
+
   return 0;
 }
 

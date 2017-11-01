@@ -5,6 +5,7 @@
 //static int PACK_SIZE = 0;
 //static int TRAMA_SIZE = 0;
 static int DEBUG_FLAG = 0;
+static int numRetries = 0;
 unsigned char packNum = 0;
 
 int transmitter(char * fileName, int fd) //envio da trama com SET
@@ -31,7 +32,8 @@ int transmitter(char * fileName, int fd) //envio da trama com SET
   //char count = get_sequence_number(); // TODO::controloooo
   char packCount = 0;
   int bytesWritten = 0;
-  while(bytesWritten < size)
+  int writeInt = 0;
+  while(bytesWritten < size && numRetries < MAXRETRIES)
   {
     int res = fread(data, 1, PACK_SIZE, file);
     printf("res: %d\n", res);
@@ -40,16 +42,24 @@ int transmitter(char * fileName, int fd) //envio da trama com SET
     res = create_data_package(data, res, packCount);
     packCount++;
     packCount %= 255; //caso ultrupasse os 255bytes disponíveis do count
-    if(llwrite(fd, data, res) == 0)
+    writeInt = llwrite(fd, data, res);
+    if(writeInt == 0)
     {
       bytesWritten += bytesRead;
       //count ^= 1; aqui incrementava-se
-    } else {
+    } else if(writeInt == 1){
+      numRetries++;
       printf("CONECTION LOST\n");
-      free(data);
-      exit(1);
+
     }
   }
+  if(numRetries == 3)
+  {
+    numRetries = 0;
+    free(data);
+    exit(1);
+  }
+  numRetries = 0;
   printf("ENVIADO TUDO");
   free(data);
 

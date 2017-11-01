@@ -13,7 +13,7 @@
 #define TSIZE 0
 #define TNAME 1
 
-#define PACK_SIZE 100
+#define PACK_SIZE 600
 
 int transmitter(char * fileName, int fd);
 int receiver(int fd);

@@ -58,4 +58,6 @@ void switchC1();
 #define REJ       0x01
 */
 
+#define MAXRETRIES 3
+
 #endif
