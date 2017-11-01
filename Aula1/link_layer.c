@@ -348,14 +348,14 @@ int llwrite(int fd, char *bufferer, int len){
 }
 
 
-int llread(int fd, char *buffer){
+int llread(int fd, char *data){
 
 	printf("\nReading I Frame...\n");
 
 	state = START;
 	STOP = FALSE;
 
-	char *data = malloc(3000);
+	char *buffer = malloc(3000);
 	unsigned char byte;
 	unsigned int size = 0;
 	unsigned int dataSize = 0;
