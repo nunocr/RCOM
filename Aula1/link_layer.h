@@ -9,7 +9,7 @@ int llread(int fd, char *buffer);
 int llclose(int fd);
 
 /* Utilities */
-char* stuffing(char * package, int length);
+int stuffing(char * package, int length);
 int deStuffing(char * package, int length);
 void switchC1();
 unsigned char calculateBCC2(char* buffer, unsigned int size);

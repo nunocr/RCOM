@@ -15,13 +15,13 @@
 #include "application_layer.h"
 
 int main(int argc, char** argv) {
-	if (argc != 3) {
+
+
+if(strcmp(argv[2], "TRANSMITTER") == 0){
+	if (argc != 4) {
 		printf("ERROR: Wrong number of arguments.\n");
 		exit(0);
 	}
-
-if(strcmp(argv[2], "TRANSMITTER") == 0){
-
   int t_fd;
 	char *t_buf = malloc(sizeof(*t_buf));
 

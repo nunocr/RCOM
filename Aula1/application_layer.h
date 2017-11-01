@@ -15,8 +15,8 @@
 int transmitter(char * fileName, int fd);
 int receiver(int fd);
 int open_file(FILE ** file, char * fileName);
-int file_size(FILE * file, int * fileSize);
-int create_start_package(int mode, char * fileName, int size, char * package);
+int file_size(FILE * file, unsigned int * fileSize);
+int create_start_package(int mode, char * fileName, unsigned int size, char * package);
 int check_num_bytes(int size);
-int getFileInfo(char* buffer, int buffsize, int *size, char *name);
+int get_file_info(char* buffer, int buffsize, unsigned int *size, char *name);
 int create_file(FILE ** file, char * fileName);
