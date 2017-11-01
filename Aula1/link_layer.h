@@ -12,7 +12,7 @@ int llclose(int fd);
 int stuffing(char * package, int length);
 int deStuffing(char * package, int length);
 void switchC1();
-unsigned char calculateBCC2(char* buffer, unsigned int size);
+ char calculateBCC2(char* buffer,  int size);
 
 #define BAUDRATE B38400
 #define _POSIX_SOURCE 1 /* POSIX compliant source */

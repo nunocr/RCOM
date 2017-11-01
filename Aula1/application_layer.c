@@ -10,7 +10,7 @@ int transmitter(char * fileName, int fd) //envio da trama com SET
 {
   FILE * file = NULL;
   //openfile
-  unsigned int fileSize = 0;
+   int fileSize = 0;
   DEBUG_FLAG = open_file(&file, fileName);
   if(DEBUG_FLAG != 0)
     return -1;
@@ -41,7 +41,7 @@ int transmitter(char * fileName, int fd) //envio da trama com SET
   //depois avançar
   //enviar mensagem com o START_PACK (2) END_PACK(3) DATA_PACK(1) TODO::fazer defines disto
   char * packStart = malloc(1024);
-  unsigned int packageSize = create_start_package(START_PACK, fileName, fileSize, packStart);
+   int packageSize = create_start_package(START_PACK, fileName, fileSize, packStart);
   llwrite(fd, packStart, packageSize);      //int fd, char *buffer, int len);
   free(packStart);
 
@@ -53,8 +53,8 @@ int receiver(int fd){
 
   //receive START signal
   char *start = malloc(1024);
-  unsigned int startSize = llread(fd, start);
-  unsigned int fileSize;
+   int startSize = llread(fd, start);
+   int fileSize;
   char *name = malloc(1024);
   if( get_file_info(start, startSize, &fileSize, name) == -1)
   {
@@ -67,6 +67,7 @@ int receiver(int fd){
     printf("opened file\n");
 
 free(name);
+return 0;
 }
 
 int open_file(FILE ** file, char * fileName)
@@ -93,11 +94,11 @@ int create_file(FILE ** file, char * fileName)
   return 0;
 }
 
-int file_size(FILE * file, unsigned int * fileSize)
+int file_size(FILE * file,  int * fileSize)
 {
   fseek(file, 0, SEEK_END); // seek to end of file
 
-  *fileSize = (unsigned int) ftell(file);   // get current file pointer
+  *fileSize = ( int) ftell(file);   // get current file pointer
   fseek(file, 0, SEEK_SET); // seek back to beginning of file
                              // proceed with allocating memory and reading the file
   if(fileSize <= 0)
@@ -108,7 +109,7 @@ int file_size(FILE * file, unsigned int * fileSize)
   return 0;
 }
 
-int create_start_package(int mode, char * fileName, unsigned int size, char * package)
+int create_start_package(int mode, char * fileName,  int size, char * package)
 {
   //size = 10968
   int numBytesSize = check_num_bytes(size);
@@ -120,7 +121,7 @@ int create_start_package(int mode, char * fileName, unsigned int size, char * pa
   while(size != 0)
   {
     printf("%d",size);
-    char aux = ((unsigned char) size) & 0xFF;
+    char aux = (( char) size) & 0xFF;
     printf("as%x\n",aux);
     package[i] = 0;
     package[i] = aux;
@@ -152,7 +153,7 @@ int check_num_bytes(int size)
   return count;
 }
 
-int get_file_info(char* buffer, int buffsize, unsigned int *size, char *name)
+int get_file_info(char* buffer, int buffsize,  int *size, char *name)
 {
   printf("%d\n", buffsize);
   int fileSize = 0;
@@ -160,25 +161,25 @@ int get_file_info(char* buffer, int buffsize, unsigned int *size, char *name)
   if(buffer[i] != START_PACK && buffer[i] != END_PACK)
   {
     printf("%x\n", buffer[i]);
-    printf("asdasdasd\n");
+    printf("get file info: buffer error\n");
     return -1;
   }
   i++; //TSIZE
   if(buffer[i] != TSIZE)
   {
-    printf("asdasdasd\n");
+    printf("get file info: tsize\n");
     return -1;
   }
 
-  i++; //numBytesSize
+  i++; //numBytesSize - T
   int sizeLength = (int) buffer[i];
-  i++; //Numero de Bytes do ficheiro
+  i++; //Numero de Bytes do ficheiro - L
   int j;
   for(j=0; j< sizeLength; j++, i++)
   {
     int k;
-    unsigned char ch = (unsigned char) buffer[i];
-    unsigned int curr = (unsigned int) ch;
+     char ch = ( char) buffer[i];
+     int curr = ( int) ch;
     for(k = 0; k < j; k++)
         curr = curr << 8;
     fileSize += curr;
@@ -186,17 +187,30 @@ int get_file_info(char* buffer, int buffsize, unsigned int *size, char *name)
   *size = fileSize;
   printf("Tamanho do ficheiro %d\n", *size);
 
-  i++; //TNAME
+  //i++; //TNAME
+  printf("buffer[%d]=%02x\n", i, buffer[i]);
+  printf("TNAME=%d\n", TNAME);
+
+  int oi;
+  printf("\n\n\nB U F F E R\n");
+  for(oi=0; oi < buffsize; oi++){
+    printf("buffer[%d]=%02x\n", oi, buffer[oi]);
+  }
+
+
+  printf("i = %d\n", i);
   if(buffer[i] != TNAME)
     return -1;
   i++; //NAME size
   int nameLength = buffer[i];
+  printf("name length: %02x\n", buffer[i]);
   i++; //NAME data
   name = realloc(name, nameLength);
+  printf("Nome do ficheiro:\n");
   for(j=0; j<nameLength; j++, i++)
   {
     name[j] = buffer[i];
-    printf("Nome ficheiro %d", name[j]);
+    printf("%d", name[j]);
   }
   name[j] = '\0';
 

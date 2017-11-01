@@ -514,7 +514,6 @@ else{
 	int ret = write(fd, &REJ, 1);
 	printf("llread:REJ: %d bytes written\n", ret);
 }
-	printf("asdasdasdasdasdas\n");
   return newdatasize;
 }
 
@@ -610,8 +609,8 @@ int deStuffing(char * package, int length){
   return size; //return the new size of the package
 }
 
-unsigned char calculateBCC2(char* bufferer, unsigned int size) {
-	unsigned char BCC2 = 0;
+ char calculateBCC2(char* bufferer,  int size) {
+	 char BCC2 = 0;
 
 	int i = 0;
 	for (i = 0; i < size; i++)
