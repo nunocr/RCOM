@@ -24,6 +24,14 @@ const short ESC_SUB = 0x5D7D;
 
 struct termios oldtio;
 
+volatile int breakflag = 3;
+
+void handle(int sig) {
+    printf("Alarme Triggered\n");
+    --breakflag;
+    alarm(1);
+}
+
 unsigned int retry_counter, state, connected = FALSE;
 /*
 void* signal(SIGALRM, alarmHandler);
@@ -302,12 +310,12 @@ int llwrite(int fd, char *bufferer, int len){
   bufferer[2] = 0x55; //Dn
 */
 	unsigned char BCC2 = calculateBCC2(bufferer, len);
-printf("HUHEUHEUHEUHEU\n");
+
 
   int newSize = stuffing(bufferer, len);
 
   char* frame_to_send = malloc(6 + newSize);
-printf("HUHEUHEUHEUHEU\n");
+
   frame_to_send[0] = FLAG;
   frame_to_send[1] = A;
   frame_to_send[2] = C1;
@@ -316,15 +324,21 @@ printf("HUHEUHEUHEUHEU\n");
 	frame_to_send[4+newSize] = BCC2;
   frame_to_send[4+newSize+1] = FLAG;
 
-printf("HUHEUHEUHEUHEU\n");
 	//send bufferer to llread
+	sleep(1);
 	  int ret = write(fd, frame_to_send, 6+newSize);
 	  printf("llwrite:write: %d bytes written\n", ret);
 
  //wait for RR confirmation response
 	unsigned char byte;
-
-	int aux = read(fd, &byte, 1);
+	signal(SIGALRM, handle);
+	int aux = 0;
+	alarm(2);
+	while(breakflag && aux == 0)
+	{
+		aux = read(fd, &byte, 1);
+	}
+ 	breakflag = 3;
 	 if(aux <= 0){
 		 printf("Nothing read from llread.\n");
 		 return -1;
