@@ -25,7 +25,14 @@ const short ESC_SUB = 0x5D7D;
 struct termios oldtio;
 
 unsigned int retry_counter, state, connected = FALSE;
+/*
+void* signal(SIGALRM, alarmHandler);
 
+void alarmHandler(){
+	retry_counter++;
+	prtinf("Alarm TRIGGERED, retry_counter = %d\n", retry_counter);
+}
+*/
 void switchC1(){
 	if (C1 == 0x00) C1 = 0x40; //Ns1
 	else            C1 = 0x00; //Ns0
@@ -311,14 +318,14 @@ printf("HUHEUHEUHEUHEU\n");
 
 printf("HUHEUHEUHEUHEU\n");
 	//send bufferer to llread
-		sleep(1);
 	  int ret = write(fd, frame_to_send, 6+newSize);
 	  printf("llwrite:write: %d bytes written\n", ret);
 
  //wait for RR confirmation response
 	unsigned char byte;
 
-	 if(read(fd, &byte, 1) <= 0){
+	int aux = read(fd, &byte, 1);
+	 if(aux <= 0){
 		 printf("Nothing read from llread.\n");
 		 return -1;
 	 }
@@ -328,8 +335,7 @@ printf("HUHEUHEUHEUHEU\n");
 		 return 1;
 	 }
 
-
-	printf("RR received: %02x\n", byte);
+	printf("Response message received: %02x\n", byte);
   return 0;
 }
 
@@ -484,13 +490,14 @@ if(data_BCC2 == (unsigned char) buffer[size - 2]){
 		switchC1();
 
 	//printf("BCC2 processed successfully.\n");
-	int ret = write(fd, &RR, 1);
+	int ret = write(fd, &RR, sizeof(byte));
   printf("llread:RR: %d bytes written\n", ret);
 }
 else{
 	printf("Error in BCC2, sending REJ message.\n");
-	int ret = write(fd, &REJ, 1);
+	int ret = write(fd, &REJ, sizeof(byte));
 	printf("llread:REJ: %d bytes written\n", ret);
+	return -1;
 }
   return newdatasize;
 }

@@ -33,23 +33,31 @@ int transmitter(char * fileName, int fd) //envio da trama com SET
   char packCount = 0;
   int bytesWritten = 0;
   int writeInt = 0;
+  int aux = 0;
+  int res = 0;
+  int bytesRead = 0;
   while(bytesWritten < size && numRetries < MAXRETRIES)
   {
-    int res = fread(data, 1, PACK_SIZE, file);
-    printf("res: %d\n", res);
-    int bytesRead = res;
+    if(aux == 0)
+    {
+      res = fread(data, 1, PACK_SIZE, file);
+      printf("res: %d\n", res);
+      bytesRead = res;
 
-    res = create_data_package(data, res, packCount);
-    packCount++;
-    packCount %= 255; //caso ultrupasse os 255bytes disponíveis do count
+      res = create_data_package(data, res, packCount);
+      packCount++;
+      packCount %= 255; //caso ultrupasse os 255bytes disponíveis do count
+    }
     writeInt = llwrite(fd, data, res);
     if(writeInt == 0)
     {
       bytesWritten += bytesRead;
+      aux = 0;
       //count ^= 1; aqui incrementava-se
     } else if(writeInt == 1){
       numRetries++;
       printf("CONECTION LOST\n");
+      aux = 1;
 
     }
   }
@@ -110,16 +118,22 @@ int receiver(int fd){
   //receber ficheiro e gravar
   int bytesRead = 0;
   char * buffer = malloc(1024);
+  int checkRead = 0;
   while(bytesRead<fileSize)
   {
     int size;
-    llread(fd, buffer);
-    size = get_data(buffer, size);
-    printf("Size:%d --- %d\n",bytesRead, size);
-    if(size!= -1)
+    checkRead = llread(fd, buffer);
+    if(checkRead == -1)
     {
-      fwrite(buffer, 1, size, file);
-      bytesRead += size;
+      printf("Retrying Reading the same package\n");
+    } else {
+      size = get_data(buffer, size);
+      printf("Size:%d --- %d\n",bytesRead, size);
+      if(size!= -1)
+      {
+        fwrite(buffer, 1, size, file);
+        bytesRead += size;
+      }
     }
   }
   free(buffer);
