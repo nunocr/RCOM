@@ -129,11 +129,19 @@ int receiver(int fd){
     } else {
       size = get_data(buffer, size);
       printf("Size:%d --- %d\n",bytesRead, size);
-      if(size!= -1)
+      if(size!= -1 && getRR() == 0)
       {
         fwrite(buffer, 1, size, file);
         bytesRead += size;
       }
+      else if(size != 0 && getRR() == 1)
+      {
+        fseek(file,bytesRead, SEEK_SET);
+        fwrite(buffer, 1, size, file);
+        bytesRead += size;
+        setRR();
+      }
+      else{ printf("Size is negative'-'\n");}
     }
   }
   free(buffer);

@@ -8,6 +8,8 @@ int llwrite(int fd, char *buffer, int len);
 int llread(int fd, char *buffer);
 int llclose(int fd, int flag);
 
+int getRR();
+void setRR();
 /* Utilities */
 int stuffing(char * package, int length);
 int deStuffing(char * package, int length);
