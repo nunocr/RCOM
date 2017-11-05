@@ -54,7 +54,7 @@ int transmitter(char * fileName, int fd) //envio da trama com SET
       bytesWritten += bytesRead;
       aux = 0;
       //count ^= 1; aqui incrementava-se
-    } else if(writeInt == 1){
+    } else if(writeInt != 0){
       numRetries++;
       printf("CONECTION LOST\n");
       aux = 1;

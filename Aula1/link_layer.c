@@ -31,14 +31,36 @@ struct termios oldtio;
 int rrNotSend = 0;
 
 volatile int breakflag = 3;
+volatile int receiver_breakflag = 3;
 
 void handle(int sig) {
 	printf("Alarme Triggered\n");
+	if(breakflag == 2){
+		printf("Alarm: Connection lost\n");
+		printf("breakflag = %d\n", breakflag);
+		exit(1);
+	}
 	--breakflag;
 	rrNotSend = 1;
 	write(fdGlobal, frameGlobal, lenGlobal);
 	alarm(1);
 }
+
+void receiverHandle(int sig){
+	printf("receiver Alarm triggered\n");
+	if(receiver_breakflag == 0){
+		printf("Receiver Alarm: connection lost\n");
+		printf("receiver_breakflag = %d\n", receiver_breakflag);
+		receiver_breakflag = 3;
+		exit(1);
+	}
+	--receiver_breakflag;
+	alarm(1);
+}
+
+
+
+
 int getRR()
 {
 	return rrNotSend;
@@ -359,6 +381,7 @@ int llwrite(int fd, char *bufferer, int len){
 	{
 		aux = read(fd, &byte, 1);
 	}
+	alarm(0);
 	breakflag = 3;
 	if(aux <= 0){
 		printf("Nothing read from llread.\n");
@@ -387,11 +410,22 @@ int llread(int fd, char *data){
 	unsigned int size = 0;
 	unsigned int dataSize = 0;
 
+	int tries = 0;
+
+	signal(SIGALRM, receiverHandle);
+	alarm(2);
+
 	while(!STOP){
 		if(state != END){
 			if(read(fd, &byte, sizeof(byte)) == 0){
 				printf("Error: Nothing read from llread.\n");
-				exit(-1);
+				sleep(1);
+				tries++;
+				if(tries == 3)
+				{
+					printf("Connection Lost!");
+					exit(1);
+				}
 			}
 			//printf("Current byte being proccessed: %02x\n", byte);
 		}
@@ -510,7 +544,7 @@ STOP = TRUE;
 break;
 }
 }
-
+alarm(0);
 unsigned int newdatasize = deStuffing(data, dataSize) - 1;
 
 //Send RR confirmation packet if BCC2 is correct
