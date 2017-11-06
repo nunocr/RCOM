@@ -35,7 +35,7 @@ volatile int receiver_breakflag = 3;
 
 void handle(int sig) {
 	printf("Alarme Triggered\n");
-	if(breakflag == 2){
+	if(breakflag == 0){
 		printf("Alarm: Connection lost\n");
 		printf("breakflag = %d\n", breakflag);
 		exit(1);
@@ -362,7 +362,6 @@ int llwrite(int fd, char *bufferer, int len){
 	frame_to_send[4+newSize+1] = FLAG;
 
 	//send bufferer to llread
-	sleep(1);
 	int ret = write(fd, frame_to_send, 6+newSize);
 
 	//Variables to Send If Alarm Gets Triggered

@@ -38,19 +38,20 @@ int transmitter(char * fileName, int fd) //envio da trama com SET
   int bytesRead = 0;
   while(bytesWritten < size && numRetries < MAXRETRIES)
   {
-    if(aux == 0)
-    {
+    	  
+	  fseek(file, bytesWritten, SEEK_SET);
       res = fread(data, 1, PACK_SIZE, file);
       printf("res: %d\n", res);
       bytesRead = res;
 
       res = create_data_package(data, res, packCount);
-      packCount++;
-      packCount %= 255; //caso ultrupasse os 255bytes disponíveis do count
-    }
+      
+    
     writeInt = llwrite(fd, data, res);
     if(writeInt == 0)
     {
+	  packCount++;
+      packCount %= 255; //caso ultrupasse os 255bytes disponíveis do count
       bytesWritten += bytesRead;
       aux = 0;
       //count ^= 1; aqui incrementava-se
