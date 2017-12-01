@@ -26,4 +26,12 @@ typedef struct URL {
 	int port; // integer to port
 } url;
 
+
+int parseLink(char *link, char *host, char *path, char *file);
 static int connectSocket(const char * IP,int PORT);
+int FTPdownload(char *path, char *filename, ftp *ftp);
+int FTPconnect(ftp *FTP, char *ip, int port);
+int FTPsend(ftp *FTP, char *msg, int size);
+int FTPread(ftp *FTP, char *msg, unsigned int size);
+int FTPdisconnect(ftp * FTP);
+int FTPpasv(ftp * FTP);
