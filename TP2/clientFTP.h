@@ -16,15 +16,6 @@ typedef struct ftp {
   int fd_data; // o  file descriptor do data socket
 } ftp;
 
-typedef struct URL {
-	url_content user; // string to user
-	url_content password; // string to password
-	url_content host; // string to host
-	url_content ip; // string to IP
-	url_content path; // string to path
-	url_content filename; // string to filename
-	int port; // integer to port
-} url;
 
 
 int parseLink(char *link, char *host, char *path, char *file);
@@ -35,3 +26,6 @@ int FTPsend(ftp *FTP, char *msg, int size);
 int FTPread(ftp *FTP, char *msg, unsigned int size);
 int FTPdisconnect(ftp * FTP);
 int FTPpasv(ftp * FTP);
+int getIP(char *link, char *ip);
+int parseNameAndPass(char *link,char * user, char * pass);
+int FTPlogin(ftp* FTP, char *user, char *pass);

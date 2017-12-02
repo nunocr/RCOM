@@ -1,5 +1,4 @@
 #include "clientFTP.h"
-#include "getip.c"
 
 int main(int argc, char **argv) {
     if (argc != 2) {
@@ -99,6 +98,45 @@ int FTPpasv(ftp * FTP){
         printf("FAIL: PASV connectSocket \n");
         return 1;
     }
+    return 0;
+}
+
+int FTPlogin(ftp* FTP, char *user, char *pass) {
+
+    char msg[2048];
+
+    sprintf(msg,"USER %s\n",user);
+
+    if(FTPsend(FTP,msg,strlen(msg))){
+        printf("FAIL: Unable to send user name\n");
+        return 1;
+    }
+
+    //printf("SEND  USER:   %s\n",msg);
+
+    if(FTPread(FTP,msg,sizeof(msg))){
+        printf("FAIL: Unable to get response \n");
+        return 1;
+    }
+
+        //  printf("READ USER response:   %s\n",msg);
+
+    memset(msg,0,sizeof(msg));
+
+    sprintf(msg,"PASS %s\n",pass);
+    if(FTPsend(FTP,msg,strlen(msg))){
+        printf("FAIL: unable to send password \n");
+        return 1;
+    }
+    //printf("SEND PASS: %s\n", pass);
+
+
+    if(FTPread(FTP,msg,sizeof(msg))){
+        printf("FAIL: unable to get response password \n");
+        return 1;
+    }
+
+    //printf("%s\n",msg);
     return 0;
 }
 
@@ -352,4 +390,36 @@ static int connectSocket(const char *IP, int PORT) {
     }
 
     return sockfd;
+}
+
+int getIP(char *link, char *ip)
+{
+	struct hostent *h;
+
+
+
+/*
+struct hostent {
+	char    *h_name;	Official name of the host.
+    	char    **h_aliases;	A NULL-terminated array of alternate names for the host.
+	int     h_addrtype;	The type of address being returned; usually AF_INET.
+    	int     h_length;	The length of the address in bytes.
+	char    **h_addr_list;	A zero-terminated array of network addresses for the host.
+				Host addresses are in Network Byte Order.
+};
+
+#define h_addr h_addr_list[0]	The first address in h_addr_list.
+*/
+	if ((h = gethostbyname(link)) == NULL) {
+		herror("gethostbyname");
+		exit(1);
+	}
+
+	// printf("Host name  : %s\n", h->h_name);
+	// printf("IP Address : %s\n", inet_ntoa(*((struct in_addr *)h->h_addr)));
+
+	char *tmpIP;
+	tmpIP = inet_ntoa(*((struct in_addr *)h->h_addr));
+	strcpy(ip, tmpIP);
+	return 0;
 }
