@@ -1,7 +1,7 @@
 configure terminal
 
 interface fastethernet 0/0
-ip address 172.16.31.254 255.255.2550
+ip address 172.16.31.254 255.255.255.0
 no shutdown
 ip nat inside
 exit
