@@ -18,7 +18,7 @@ ip nat inside source list 1 pool ovrld overload
 access-list 1 permit 172.16.30.0 0.0.0.7
 access-list 1 permit 172.16.31.0 0.0.0.7
 
-ip route 0.0.0.0 0.0.0.0 172.16.1.254
+ip route 0.0.0.0 0.0.0.0 172.16.2.254
 ip route 172.16.30.0 255.255.255.0 172.16.31.253
 
 end

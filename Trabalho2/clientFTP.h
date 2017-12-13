@@ -17,7 +17,7 @@ typedef struct ftp {
 } ftp;
 
 
-
+int validURL(char *url, unsigned int size);
 int parseLink(char *link, char *host, char *path, char *file);
 static int connectSocket(const char * IP,int PORT);
 int FTPdownload(char *path, char *filename, ftp *ftp);
